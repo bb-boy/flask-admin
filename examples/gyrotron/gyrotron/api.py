@@ -3,6 +3,7 @@
 The API shares SQLAlchemy entities with legacy Flask-Admin. It does not expose
 authentication: restrict network access at the reverse proxy / SSH boundary.
 """
+
 from __future__ import annotations
 
 import re
@@ -48,8 +49,10 @@ def serialize(shot: Shot, *, include_parameters: bool = True) -> dict[str, Any]:
         "remark": shot.remark,
     }
     payload.update(
-        {field: str(getattr(shot, field)) if getattr(shot, field) is not None else None
-         for field in NUMERIC_FIELDS}
+        {
+            field: str(getattr(shot, field)) if getattr(shot, field) is not None else None
+            for field in NUMERIC_FIELDS
+        }
     )
     if include_parameters:
         payload["custom_parameters"] = [
@@ -86,7 +89,9 @@ def optional_string(value: Any, key: str, limit: int | None = None) -> str | Non
 
 
 def parse_bigint(value: Any, key: str) -> int:
-    if isinstance(value, bool) or not re.fullmatch(r"[+-]?\d+", str("" if value is None else value)):
+    if isinstance(value, bool) or not re.fullmatch(
+        r"[+-]?\d+", str("" if value is None else value)
+    ):
         raise RecordValidationError(f"{key} 必须是整数")
     parsed = int(str(value))
     if not BIGINT_MIN <= parsed <= BIGINT_MAX:
@@ -144,7 +149,12 @@ def validated_form(data: Any) -> dict[str, Any]:
     parsed_params: list[dict[str, Any]] = []
     for row in params:
         if not isinstance(row, dict) or set(row) - {
-            "id", "name", "description", "unit", "data_type", "value"
+            "id",
+            "name",
+            "description",
+            "unit",
+            "data_type",
+            "value",
         }:
             raise RecordValidationError("自定义参数数据格式错误")
         raw_id = row.get("id")
@@ -213,14 +223,16 @@ def dashboard():
         .order_by(func.count(Shot.id).desc(), Shot.Serial)
         .limit(8)
     ).all()
-    return jsonify({
-        "shots": total,
-        "serials": devices,
-        "parameters": custom,
-        "latest_date": latest_date.isoformat() if latest_date else None,
-        "recent": [serialize(shot, include_parameters=False) for shot in recent],
-        "by_serial": [{"name": serial, "count": count} for serial, count in groups],
-    })
+    return jsonify(
+        {
+            "shots": total,
+            "serials": devices,
+            "parameters": custom,
+            "latest_date": latest_date.isoformat() if latest_date else None,
+            "recent": [serialize(shot, include_parameters=False) for shot in recent],
+            "by_serial": [{"name": serial, "count": count} for serial, count in groups],
+        }
+    )
 
 
 @api.get("/shots")
@@ -242,10 +254,14 @@ def list_shots():
         stmt = stmt.where(Shot.Serial.ilike(f"%{term}%", escape="\\"))
     total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     rows = db.scalars(stmt.order_by(Shot.id.desc()).offset((page - 1) * size).limit(size)).all()
-    return jsonify({
-        "items": [serialize(shot, include_parameters=False) for shot in rows],
-        "total": total, "page": page, "page_size": size,
-    })
+    return jsonify(
+        {
+            "items": [serialize(shot, include_parameters=False) for shot in rows],
+            "total": total,
+            "page": page,
+            "page_size": size,
+        }
+    )
 
 
 @api.get("/shots/<int:shot_id>")

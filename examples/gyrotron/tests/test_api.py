@@ -1,4 +1,5 @@
 """HTTP/API regression tests for the React frontend's database-backed JSON service."""
+
 from gyrotron import create_app
 from gyrotron.models import CustomParameter, Shot
 
@@ -63,7 +64,13 @@ def test_api_create_list_detail_edit_and_cross_shot_independence():
     payload = example(value="8.75")
     payload["custom_parameters"][0]["id"] = first.json["custom_parameters"][0]["id"]
     payload["custom_parameters"].append(
-        {"name": "Vacuum", "description": "真空度", "unit": "Pa", "data_type": "DECIMAL", "value": "0.25"}
+        {
+            "name": "Vacuum",
+            "description": "真空度",
+            "unit": "Pa",
+            "data_type": "DECIMAL",
+            "value": "0.25",
+        }
     )
     updated = client.put(f"/api/v1/shots/{a_id}", json=payload)
     assert updated.status_code == 200, updated.json
@@ -113,8 +120,12 @@ def test_api_rejects_cross_shot_parameter_id_and_keeps_other_data():
     payload["custom_parameters"][0]["id"] = second["custom_parameters"][0]["id"]
     response = client.put(f"/api/v1/shots/{first['id']}", json=payload)
     assert response.status_code == 400
-    assert client.get(f"/api/v1/shots/{first['id']}").json["custom_parameters"][0]["value"] == "2.50"
-    assert client.get(f"/api/v1/shots/{second['id']}").json["custom_parameters"][0]["value"] == "2.50"
+    assert (
+        client.get(f"/api/v1/shots/{first['id']}").json["custom_parameters"][0]["value"] == "2.50"
+    )
+    assert (
+        client.get(f"/api/v1/shots/{second['id']}").json["custom_parameters"][0]["value"] == "2.50"
+    )
 
 
 def test_api_input_validation_and_search_pagination_limits():
@@ -135,3 +146,5 @@ def test_api_input_validation_and_search_pagination_limits():
     for query in ("page=0", "page_size=1000", "page=none"):
         assert client.get("/api/v1/shots?" + query).status_code == 400
     assert client.get("/api/v1/shots/9999").status_code == 404
+
+[executed on device: pangdeMacBook-Neo.local (958dd551-5442-478f-801a-f710221ce740)]
