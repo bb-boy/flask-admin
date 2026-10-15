@@ -53,13 +53,3 @@ Flask-Admin 上游使用 BSD-3-Clause 许可证：https://github.com/pallets-eco
 
 ## 端到端浏览器测试
 GitHub Actions 使用真实 Chromium 浏览器执行 `browser_e2e.py`，覆盖点击“添加参数”、录入保存、新炮次界面重置、历史炮次打开与参数修改，并在 Actions 中上传截图产物；真实用户仍须确认部署后的界面与网络可用性。
-
-## 现代化中文界面
-
-界面位于 `gyrotron/templates/gyrotron/` 和 `gyrotron/static/css/lab.css`：
-- 深色侧栏导航、实时数据概览、近期炮次和快捷操作；
-- 炮次数据列表支持原有搜索、排序、筛选、导出和分页；
-- 新建与历史编辑采用分组表单，自定义参数仍使用 Flask-Admin 原生内联增删逻辑；
-- 小屏幕自适应，不依赖外部 CDN 或 Node 构建工具，适合离线内网环境。
-
-界面改造只涉及模板和样式，数据库模型与业务约束不变；提交到 GitHub 开发分支后，需通过 CI 再部署到 `inA`。
