@@ -6,7 +6,7 @@ services:
       DATABASE_URL: postgresql+psycopg://gyrotron:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/gyrotron
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
     ports:
-      - "127.0.0.1:8000:8000"
+      - "${GYROTRON_BIND_ADDRESS:-127.0.0.1}:${GYROTRON_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
