@@ -46,7 +46,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
 
     @app.route("/app/")
     @app.route("/app/<path:client_path>")
-    def frontend(client_path: str = ""):
+    def frontend(client_path: str = "") -> Any:
         # Built by Vite and copied into this package in the production Dockerfile.
         folder = Path(app.static_folder or "") / "app"
         if not (folder / "index.html").is_file():

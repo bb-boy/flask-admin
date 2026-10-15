@@ -29,7 +29,7 @@ def session():
     return db.session
 
 
-def fail(message: str, code: int = 400):
+def fail(message: str, code: int = 400) -> Any:
     return jsonify({"error": message}), code
 
 
@@ -106,7 +106,7 @@ def parse_decimal(value: Any, key: str) -> Decimal | None:
     if not number.is_finite():
         raise RecordValidationError(f"{key} 不能为 NaN 或无穷大")
     # Matches SQLAlchemy Numeric(28, 10). Avoid PostgreSQL overflow or rounding.
-    if abs(number) >= Decimal("1e18") or number.as_tuple().exponent < -10:
+    if abs(number) >= Decimal("1e18") or int(number.as_tuple().exponent) < -10:
         raise RecordValidationError(f"{key} 超出数值精度范围（最多 10 位小数）")
     return number
 
@@ -249,7 +249,7 @@ def list_shots():
 
 
 @api.get("/shots/<int:shot_id>")
-def get_shot(shot_id: int):
+def get_shot(shot_id: int) -> Any:
     shot = session().scalar(
         select(Shot).options(selectinload(Shot.custom_parameters)).where(Shot.id == shot_id)
     )
@@ -279,7 +279,7 @@ def create_shot():
 
 
 @api.put("/shots/<int:shot_id>")
-def update_shot(shot_id: int):
+def update_shot(shot_id: int) -> Any:
     db = session()
     shot = db.scalar(
         select(Shot).options(selectinload(Shot.custom_parameters)).where(Shot.id == shot_id)
@@ -300,7 +300,7 @@ def update_shot(shot_id: int):
 
 
 @api.delete("/shots/<int:shot_id>")
-def delete_shot(shot_id: int):
+def delete_shot(shot_id: int) -> Any:
     db = session()
     shot = db.get(Shot, shot_id)
     if shot is None:

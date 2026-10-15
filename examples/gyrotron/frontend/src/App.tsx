@@ -272,6 +272,7 @@ function ShotEditor() {
       await Promise.all([
         client.invalidateQueries({ queryKey: ["shots"] }),
         client.invalidateQueries({ queryKey: ["dashboard"] }),
+        client.invalidateQueries({ queryKey: ["shot", recordId] }),
       ]);
       navigate("/records");
     },
