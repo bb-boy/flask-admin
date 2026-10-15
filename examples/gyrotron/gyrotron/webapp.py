@@ -1,4 +1,5 @@
 """Flask app factory for the gyrotron run log."""
+
 import os
 import secrets
 from pathlib import Path

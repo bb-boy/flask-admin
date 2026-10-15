@@ -1,5 +1,6 @@
 from gyrotron import create_app
 
+
 def test_basic_web_routes_without_login():
     app = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"})
     client = app.test_client()
@@ -7,6 +8,7 @@ def test_basic_web_routes_without_login():
     assert client.get("/").status_code == 302
     assert client.get("/admin/").status_code == 200
     assert client.get("/admin/shots/").status_code == 200
+
 
 def test_shot_create_form_contains_required_fields():
     app = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"})
@@ -18,6 +20,7 @@ def test_shot_create_form_contains_required_fields():
 
 def test_create_shot_with_inline_parameter_via_web_form():
     from gyrotron.models import Shot
+
     app = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"})
     client = app.test_client()
     result = client.post(
@@ -42,6 +45,7 @@ def test_create_shot_with_inline_parameter_via_web_form():
             ("It", "mA", "2.5"),
         ]
 
+
 def _data(serial="GYRO-001", shot="1001", name="It", value="2.5", parameter_id=None):
     fields = {
         "Serial": serial,
@@ -51,13 +55,15 @@ def _data(serial="GYRO-001", shot="1001", name="It", value="2.5", parameter_id=N
         "date": "2026-10-15",
     }
     if name is not None:
-        fields.update({
-            "custom_parameters-0-name": name,
-            "custom_parameters-0-description": "钛泵电流",
-            "custom_parameters-0-unit": "mA",
-            "custom_parameters-0-data_type": "DECIMAL",
-            "custom_parameters-0-value": value,
-        })
+        fields.update(
+            {
+                "custom_parameters-0-name": name,
+                "custom_parameters-0-description": "钛泵电流",
+                "custom_parameters-0-unit": "mA",
+                "custom_parameters-0-data_type": "DECIMAL",
+                "custom_parameters-0-value": value,
+            }
+        )
     if parameter_id is not None:
         fields["custom_parameters-0-id"] = str(parameter_id)
     return fields

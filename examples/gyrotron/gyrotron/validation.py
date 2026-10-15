@@ -1,18 +1,38 @@
 """Domain validation shared by UI and tests."""
+
 from __future__ import annotations
+
 from datetime import date
 from decimal import Decimal, InvalidOperation
+
 from .models import CustomParameter, Shot
 
-BASE_FIELDS = frozenset({
-    "Serial", "shot", "iplen", "Uc", "Ua", "Ib", "Im", "Pf", "Ic",
-    "Pw", "Pc", "remark", "date", "id", "shot_id",
-})
+BASE_FIELDS = frozenset(
+    {
+        "Serial",
+        "shot",
+        "iplen",
+        "Uc",
+        "Ua",
+        "Ib",
+        "Im",
+        "Pf",
+        "Ic",
+        "Pw",
+        "Pc",
+        "remark",
+        "date",
+        "id",
+        "shot_id",
+    }
+)
 SUPPORTED_TYPES = ("DECIMAL", "BIGINT", "STRING", "TEXT", "DATE")
 BIGINT_MIN, BIGINT_MAX = -(2**63), 2**63 - 1
 
+
 class RecordValidationError(ValueError):
     pass
+
 
 def validate_parameter(parameter: CustomParameter) -> None:
     name = (parameter.name or "").strip()
@@ -48,6 +68,7 @@ def validate_parameter(parameter: CustomParameter) -> None:
                 raise ValueError("日期不是 YYYY-MM-DD")
         except ValueError as exc:
             raise RecordValidationError(f"参数 {name} 的日期必须为 YYYY-MM-DD") from exc
+
 
 def validate_shot(shot: Shot) -> None:
     if not (shot.Serial or "").strip():
