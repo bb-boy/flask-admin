@@ -1,17 +1,22 @@
-"""Flask application factory with an isolated SQLAlchemy session."""
+"""Flask app factory for the gyrotron run log."""
 import os
 import secrets
 from pathlib import Path
+from typing import Any
+
 from flask import Flask, redirect, url_for
 from flask_admin import Admin
 from flask_admin.theme import Bootstrap4Theme
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.pool import StaticPool
+
 from .admin import ShotAdmin
 from .models import Base, Shot
 
-def create_app(test_config: dict | None = None) -> Flask:
+db = SQLAlchemy(model_class=Base)
+
+
+def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     app = Flask(__name__)
     instance_dir = Path(app.instance_path)
     instance_dir.mkdir(parents=True, exist_ok=True)
@@ -23,17 +28,16 @@ def create_app(test_config: dict | None = None) -> Flask:
     )
     if test_config:
         app.config.update(test_config)
-    url = app.config["SQLALCHEMY_DATABASE_URI"]
-    engine_options = {"pool_pre_ping": True}
-    if url in ("sqlite://", "sqlite:///:memory:"):
-        engine_options.update(connect_args={"check_same_thread": False}, poolclass=StaticPool)
-    engine = create_engine(url, **engine_options)
-    session = scoped_session(sessionmaker(bind=engine, autoflush=False))
-    Base.metadata.create_all(engine)  # MVP only; use Alembic for schema changes.
 
-    @app.teardown_appcontext
-    def remove_session(exception=None):
-        session.remove()
+    database_url = app.config["SQLALCHEMY_DATABASE_URI"]
+    engine_options: dict[str, Any] = {"pool_pre_ping": True}
+    if database_url in ("sqlite://", "sqlite:///:memory:"):
+        engine_options["connect_args"] = {"check_same_thread": False}
+        engine_options["poolclass"] = StaticPool
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = engine_options
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()  # MVP startup; future schema changes need Alembic.
 
     @app.route("/")
     def home():
@@ -44,7 +48,6 @@ def create_app(test_config: dict | None = None) -> Flask:
         return {"status": "ok"}
 
     admin = Admin(app, name="回旋管运行参数记录系统", theme=Bootstrap4Theme())
-    admin.add_view(ShotAdmin(Shot, session, name="炮次记录", endpoint="shots"))
-    app.extensions["gyrotron_db_engine"] = engine
-    app.extensions["gyrotron_session"] = session
+    admin.add_view(ShotAdmin(Shot, db, name="炮次记录", endpoint="shots"))
+    app.extensions["gyrotron_session"] = db.session
     return app

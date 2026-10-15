@@ -1,4 +1,6 @@
 """Editable shot records, with per-shot inline custom parameter rows."""
+from typing import Any, cast
+
 from flask_admin.contrib.sqla import ModelView
 from wtforms import ValidationError
 from .models import CustomParameter
@@ -29,7 +31,7 @@ class ShotAdmin(ModelView):
         "Serial": {"label": "回旋管序列号"},
         "shot": {"label": "炮号"},
     }
-    inline_models = [
+    inline_models = cast(Any, [
         (CustomParameter, {
             "form_columns": ("id", "name", "description", "unit", "data_type", "value"),
             "form_args": {
@@ -41,7 +43,7 @@ class ShotAdmin(ModelView):
             },
             "form_choices": {"data_type": [(t, t) for t in SUPPORTED_TYPES]},
         }),
-    ]
+    ])
 
     def on_model_change(self, form, model, is_created):
         try:

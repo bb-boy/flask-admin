@@ -38,8 +38,8 @@ def validate_parameter(parameter: CustomParameter) -> None:
     elif parameter.data_type == "BIGINT":
         if not value.lstrip("+-").isdigit():
             raise RecordValidationError(f"参数 {name} 必须是整数")
-        number = int(value)
-        if not BIGINT_MIN <= number <= BIGINT_MAX:
+        integer_value = int(value)
+        if not BIGINT_MIN <= integer_value <= BIGINT_MAX:
             raise RecordValidationError(f"参数 {name} 超出 BIGINT 范围")
     elif parameter.data_type == "DATE":
         try:
