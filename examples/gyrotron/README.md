@@ -68,7 +68,7 @@ GitHub Actions 使用真实 Chromium 浏览器执行 `browser_e2e.py`，覆盖�
 
 \`\`\`bash
 cd frontend
-npm install
+npm ci
 npm run build  # 构建到 ../gyrotron/static/app
 # 返回 ../ 目录，然后启动 Flask 访问 /app/
 \`\`\`

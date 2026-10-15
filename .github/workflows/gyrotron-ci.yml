@@ -41,7 +41,7 @@ jobs:
       - name: Build React and TypeScript UI
         working-directory: examples/gyrotron/frontend
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npm run build
       - name: Check Chinese interface bundle exists
         run: test -s examples/gyrotron/gyrotron/static/app/index.html
@@ -97,7 +97,7 @@ jobs:
       - name: Build modern Chinese React UI
         working-directory: examples/gyrotron/frontend
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npm run build
       - name: Install app and browser dependencies
         working-directory: examples/gyrotron
