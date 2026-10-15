@@ -1,0 +1,54 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+<section class="lab-hero">
+  <div class="lab-hero-copy">
+    <div class="lab-eyebrow"><span class="lab-eyebrow-dot"></span> 实验运行参数 · DATA WORKSPACE</div>
+    <h1>让每一次实验，<br><em>都有迹可循。</em></h1>
+    <p>统一记录回旋管运行数据，集中管理固定参数与各炮次独立的自定义参数。</p>
+    <div class="lab-hero-actions">
+      <a href="{{ url_for('shots.create_view') }}" class="lab-btn lab-btn-light"><i class="fa fa-plus" aria-hidden="true"></i> 录入新炮次</a>
+      <a href="{{ url_for('shots.index_view') }}" class="lab-btn lab-btn-outline-light">浏览全部数据 <i class="fa fa-arrow-right" aria-hidden="true"></i></a>
+    </div>
+  </div>
+  <div class="lab-hero-art" aria-hidden="true">
+    <div class="lab-orbit lab-orbit-a"></div><div class="lab-orbit lab-orbit-b"></div><div class="lab-orbit lab-orbit-c"></div>
+    <div class="lab-orbit-core"><i class="fa fa-bolt"></i></div>
+    <span class="lab-orbit-label lab-orbit-label-a">RUN / 001</span><span class="lab-orbit-label lab-orbit-label-b">DATA SYNCED</span>
+  </div>
+</section>
+<div class="lab-section-heading">
+  <div><div class="lab-section-overline">STATISTICS</div><h2>数据总览</h2><p>来自实际数据库的实时汇总</p></div>
+  <span class="lab-heading-note"><i class="fa fa-circle" aria-hidden="true"></i> LIVE DATA</span>
+</div>
+<section class="lab-stats-grid" aria-label="数据库统计">
+  <div class="lab-stat-card"><div class="lab-stat-icon lab-stat-blue"><i class="fa fa-bullseye"></i></div><div class="lab-stat-label">累计炮次记录</div><div class="lab-stat-value">{{ "{:,}".format(total_shots) }}</div><div class="lab-stat-meta">数据库全部运行记录</div></div>
+  <div class="lab-stat-card"><div class="lab-stat-icon lab-stat-indigo"><i class="fa fa-cube"></i></div><div class="lab-stat-label">回旋管序列</div><div class="lab-stat-value">{{ "{:,}".format(total_serials) }}</div><div class="lab-stat-meta">按 Serial 独立统计</div></div>
+  <div class="lab-stat-card"><div class="lab-stat-icon lab-stat-amber"><i class="fa fa-sliders"></i></div><div class="lab-stat-label">自定义参数</div><div class="lab-stat-value">{{ "{:,}".format(total_parameters) }}</div><div class="lab-stat-meta">每炮独立存储</div></div>
+  <div class="lab-stat-card"><div class="lab-stat-icon lab-stat-green"><i class="fa fa-calendar-check-o"></i></div><div class="lab-stat-label">最新实验日期</div><div class="lab-stat-date">{{ latest_date or "暂无记录" }}</div><div class="lab-stat-meta">按实验日期统计</div></div>
+</section>
+<section class="lab-main-grid">
+  <div class="lab-panel lab-recent-panel">
+    <div class="lab-panel-heading"><div><div class="lab-section-overline">LATEST RECORDS</div><h2>最近录入</h2><p>快速查看或继续编辑历史炮次</p></div><a class="lab-text-link" href="{{ url_for('shots.index_view') }}">全部记录 <i class="fa fa-arrow-right"></i></a></div>
+    {% if recent_shots %}
+      <div class="lab-recent-list">
+      {% for shot in recent_shots %}
+        <a href="{{ url_for('shots.edit_view', id=shot.id) }}" class="lab-recent-row">
+          <span class="lab-record-avatar"><i class="fa fa-flash"></i></span>
+          <span class="lab-record-name"><strong>{{ shot.Serial }}</strong><small>炮号 #{{ shot.shot }}</small></span>
+          <span class="lab-record-date">{{ shot.date.isoformat() if shot.date else '日期未填' }}</span>
+          <span class="lab-record-arrow"><i class="fa fa-angle-right"></i></span>
+        </a>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div class="lab-empty"><i class="fa fa-inbox"></i><h3>还没有实验记录</h3><p>创建第一条炮次，开始建立你的实验数据库。</p><a class="lab-btn lab-btn-primary" href="{{ url_for('shots.create_view') }}">新增炮次</a></div>
+    {% endif %}
+  </div>
+  <div class="lab-panel lab-quick-panel">
+    <div class="lab-panel-heading"><div><div class="lab-section-overline">QUICK START</div><h2>快捷操作</h2><p>让日常记录更高效</p></div></div>
+    <a href="{{ url_for('shots.create_view') }}" class="lab-quick-link"><span class="lab-quick-icon"><i class="fa fa-plus"></i></span><span><strong>新增炮次记录</strong><small>固定参数与自定义参数同步录入</small></span><i class="fa fa-angle-right"></i></a>
+    <a href="{{ url_for('shots.index_view') }}" class="lab-quick-link"><span class="lab-quick-icon"><i class="fa fa-search"></i></span><span><strong>检索历史实验</strong><small>按序列号、炮号、日期查询</small></span><i class="fa fa-angle-right"></i></a>
+    <div class="lab-quick-tip"><i class="fa fa-info-circle"></i><span>系统不需要登录。请仅在可信内网中使用，正式实验前确认数据备份策略。</span></div>
+  </div>
+</section>
+{% endblock %}

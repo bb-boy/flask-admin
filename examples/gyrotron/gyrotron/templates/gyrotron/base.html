@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+{% import 'admin/layout.html' as layout with context %}
+{% block head_css %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/lab.css') }}?v=2">
+{% endblock %}
+{% block page_body %}
+<div class="lab-layout">
+  <aside class="lab-sidebar" aria-label="主导航">
+    <a href="{{ url_for('admin.index') }}" class="lab-brand">
+      <span class="lab-brand-mark"><i class="fa fa-flash" aria-hidden="true"></i></span>
+      <span><strong>GYROTRON</strong><small>实验运行数据平台</small></span>
+    </a>
+    <div class="lab-navigation-label">工作空间 <span>WORKSPACE</span></div>
+    <nav class="lab-nav">
+      <a href="{{ url_for('admin.index') }}" class="lab-nav-link {% if request.endpoint == 'admin.index' %}is-active{% endif %}"><i class="fa fa-th-large" aria-hidden="true"></i> 数据概览</a>
+      <a href="{{ url_for('shots.index_view') }}" class="lab-nav-link {% if request.endpoint and request.endpoint.startswith('shots.') and request.endpoint != 'shots.create_view' %}is-active{% endif %}"><i class="fa fa-table" aria-hidden="true"></i> 炮次记录</a>
+      <a href="{{ url_for('shots.create_view') }}" class="lab-nav-link {% if request.endpoint == 'shots.create_view' %}is-active{% endif %}"><i class="fa fa-plus-circle" aria-hidden="true"></i> 新建炮次</a>
+    </nav>
+    <div class="lab-sidebar-foot">
+      <div class="lab-sidebar-foot-icon"><i class="fa fa-database" aria-hidden="true"></i></div>
+      <div><strong>实验数据管理</strong><small>每一炮，独立记录</small></div>
+    </div>
+  </aside>
+  <div class="lab-workspace">
+    <header class="lab-topbar">
+      <div class="lab-topbar-left">
+        <span class="lab-topbar-breadcrumb">运行参数管理</span>
+        <i class="fa fa-angle-right" aria-hidden="true"></i>
+        <span class="lab-topbar-current">{% if request.endpoint == 'admin.index' %}概览{% elif request.endpoint == 'shots.create_view' %}新增炮次{% elif request.endpoint == 'shots.edit_view' %}编辑记录{% else %}炮次数据库{% endif %}</span>
+      </div>
+      <div class="lab-topbar-right">
+        <span class="lab-online"><span class="lab-online-dot"></span> 系统运行中</span>
+        <span class="lab-topbar-divider"></span>
+        <span class="lab-env-label"><i class="fa fa-shield" aria-hidden="true"></i> 内网工作台</span>
+      </div>
+    </header>
+    <main class="lab-content" id="main-content">
+      {% block messages %}{{ layout.messages() }}{% endblock %}
+      {% set render_ctx = h.resolve_ctx() %}
+      {% block page_title %}{% endblock %}
+      {% block body %}{% endblock %}
+      <footer class="lab-footer"><span>GYROTRON / LAB RECORDS</span><span>独立炮次记录 · 数据可追溯</span></footer>
+    </main>
+  </div>
+</div>
+{% endblock %}

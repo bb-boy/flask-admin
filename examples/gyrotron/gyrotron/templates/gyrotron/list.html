@@ -1,0 +1,20 @@
+{% extends 'admin/model/list.html' %}
+{% block model_menu_bar %}
+<div class="lab-page-heading">
+  <div>
+    <div class="lab-section-overline">SHOT DATABASE / RECORDS</div>
+    <h1>炮次数据库 <span class="lab-count-badge">{{ "{:,}".format(count or 0) }}</span></h1>
+    <p>集中查看、检索并维护各回旋管的运行参数</p>
+  </div>
+  <a class="lab-btn lab-btn-primary lab-heading-cta" href="{{ get_url('.create_view') }}"><i class="fa fa-plus" aria-hidden="true"></i> 新增炮次</a>
+</div>
+<div class="lab-table-tools">
+  {{ super() }}
+</div>
+{% endblock %}
+{% block model_list_table %}
+<div class="lab-table-panel">
+  <div class="lab-table-panel-caption"><span><i class="fa fa-list-ul"></i> 运行记录明细</span><span>按列标题可排序 · 点击左侧操作图标编辑</span></div>
+  {{ super() }}
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'admin/model/edit.html' %}
+{% import 'admin/lib.html' as lib with context %}
+{% block navlinks %}
+<div class="lab-page-heading">
+  <div><div class="lab-section-overline">SHOT DATABASE / EDIT RECORD</div><h1>编辑历史炮次</h1><p>修改当前记录，不影响其他炮次的自定义参数</p></div>
+  <a class="lab-back-link" href="{{ return_url or get_url('.index_view') }}"><i class="fa fa-arrow-left"></i> 返回数据列表</a>
+</div>
+{% endblock %}
+{% block edit_form %}
+{% include 'gyrotron/_shot_form.html' %}
+{% endblock %}
