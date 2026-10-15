@@ -162,7 +162,7 @@ function Dashboard() {
       <div className="panel recent-panel">
         <div className="panel-head"><div><span className="eyebrow">最新活动</span><h2>最近录入的炮次</h2><p>随时继续编辑历史记录</p></div><Link to="/records" className="text-action">查看全部 <ArrowRight size={15} /></Link></div>
         <div className="recent-list">{data.recent.length ? data.recent.map((shot) =>
-          <Link to={\`/records/\${shot.id}/edit\`} className="recent-item" key={shot.id}>
+          <Link to={`/records/${shot.id}/edit`} className="recent-item" key={shot.id}>
             <span className="recent-icon"><Gauge size={19} /></span>
             <span className="recent-details"><strong>{shot.Serial}</strong><small>炮号 {shot.shot}</small></span>
             <span className="recent-date">{formatDate(shot.date)}</span><ChevronRight size={16} className="text-slate-400" />
@@ -192,7 +192,7 @@ function Records() {
     setParams({ ...(newSearch ? { search: newSearch } : {}), page: String(newPage) });
   }
   async function onDelete(shot: Shot) {
-    if (!window.confirm(\`确定删除“\${shot.Serial} / \${shot.shot}”吗？\n本炮次的自定义参数也会一起删除，此操作不能撤销。\`)) return;
+    if (!window.confirm(`确定删除“${shot.Serial} / ${shot.shot}”吗？\n本炮次的自定义参数也会一起删除，此操作不能撤销。`)) return;
     try {
       await remove.mutateAsync(shot.id);
     } catch { /* Error message displayed below. */ }
@@ -225,8 +225,8 @@ function Records() {
               <td className="number-cell">{shot.shot}</td><td>{formatDate(shot.date)}</td>
               <td className="number-cell">{shot.iplen ?? "—"}</td><td className="number-cell">{shot.Uc ?? "—"}</td>
               <td className="number-cell">{shot.Ib ?? "—"}</td><td className="number-cell">{shot.Im ?? "—"}</td>
-              <td><div className="row-actions"><Link title="编辑炮次" aria-label={\`编辑 \${shot.Serial} 第 \${shot.shot} 炮\`} to={\`/records/\${shot.id}/edit\`} className="row-action"><Pencil size={16} /></Link>
-                <button title="删除炮次" aria-label={\`删除 \${shot.Serial} 第 \${shot.shot} 炮\`} className="row-action row-action-danger" onClick={() => void onDelete(shot)} disabled={remove.isPending}><Trash2 size={16} /></button></div></td>
+              <td><div className="row-actions"><Link title="编辑炮次" aria-label={`编辑 ${shot.Serial} 第 ${shot.shot} 炮`} to={`/records/${shot.id}/edit`} className="row-action"><Pencil size={16} /></Link>
+                <button title="删除炮次" aria-label={`删除 ${shot.Serial} 第 ${shot.shot} 炮`} className="row-action row-action-danger" onClick={() => void onDelete(shot)} disabled={remove.isPending}><Trash2 size={16} /></button></div></td>
             </tr>)}</tbody>
         </table></div>}
       <div className="table-pagination"><span>第 {page} / {totalPages} 页</span>
