@@ -1,4 +1,5 @@
 """Integration smoke test against a disposable real PostgreSQL instance."""
+
 import os
 
 from gyrotron import create_app
