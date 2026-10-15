@@ -31,7 +31,7 @@ class ShotAdmin(ModelView):
     }
     inline_models = [
         (CustomParameter, {
-            "form_columns": ("name", "description", "unit", "data_type", "value"),
+            "form_columns": ("id", "name", "description", "unit", "data_type", "value"),
             "form_args": {
                 "name": {"label": "参数名称"},
                 "description": {"label": "参数含义"},
