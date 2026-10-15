@@ -1,0 +1,45 @@
+# 回旋管运行参数记录系统（Flask-Admin 二开）
+
+本目录是一个可以独立运行的 Flask 业务应用，使用 Flask-Admin 提供后台表格、增删改查和一对多内联表单；保留上游框架源码以便同步更新。
+
+## 已有功能
+- 无登录 Web 录入页面（**只能通过内网访问控制安全部署**）
+- 每个回旋管使用 Serial 标识，(Serial, shot) 有数据库唯一约束
+- 11 个固定字段：iplen、Uc、Ua、Ib、Im、Pf、Ic、Pw、Pc、remark、date
+- 每炮独立增删改自定义参数：name、description、unit、data_type、value
+- 历史炮次与自定义参数可恢复，新增炮次不继承上一炮参数
+- 类型与保留字段名校验；pytest + GitHub Actions 自动测试
+
+## 本地启动
+```bash
+cd examples/gyrotron
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[dev]'
+python wsgi.py
+# http://127.0.0.1:8000/admin/
+```
+
+默认使用 instance/gyrotron.sqlite3；正式部署建议 PostgreSQL。
+
+## 测试
+```bash
+python -m pytest -q
+```
+push/PR 时 GitHub Actions 使用 Python 3.11、3.12、3.13 自动运行。仓库可能需要在 Actions 中启用工作流。
+
+## Docker + PostgreSQL
+```bash
+cp .env.example .env
+# 修改 .env 的 DB_PASSWORD 和 SECRET_KEY
+docker compose up -d --build
+```
+Web 服务只映射宿主机 127.0.0.1:8000；参见 deploy/nginx.conf.example，将 IP 段收紧到实验室实际允许访问的网段后再部署。
+
+## 上线前待办
+- GitHub CI 验证全量 Web 集成测试和内联表单操作
+- 真实用户操作验收：新建炮次、同序列号同号校验、自定义参数新增/修改/删除、历史恢复
+- 使用 Alembic 管理数据库结构升级（当前 MVP 启动使用 create_all）
+- 设置实验数据定期备份、审计和误删恢复。无登录方案不能辨认操作者
+
+Flask-Admin 上游使用 BSD-3-Clause 许可证：https://github.com/pallets-eco/flask-admin
