@@ -12,7 +12,21 @@ def main():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1400, "height": 900})
         try:
+            page.goto("http://127.0.0.1:8000/admin/")
+            expect(page.get_by_role("heading", name="数据总览")).to_be_visible()
+            expect(page.locator(".lab-stat-card")).to_have_count(4)
+            expect(page.get_by_role("link", name="新增炮次记录")).to_be_visible()
+            page.screenshot(path=str(artifacts / "gyrotron-dashboard.png"), full_page=True)
+
+            page.goto("http://127.0.0.1:8000/admin/shots/")
+            expect(page.get_by_role("heading", name="炮次数据库")).to_be_visible()
+            expect(page.locator(".lab-table-panel")).to_be_visible()
+            page.screenshot(path=str(artifacts / "gyrotron-records.png"), full_page=True)
+
             page.goto("http://127.0.0.1:8000/admin/shots/new/")
+            expect(page.get_by_role("heading", name="运行参数")).to_be_visible()
+            expect(page.get_by_role("heading", name="炮次自定义参数")).to_be_visible()
+            expect(page.locator("link[rel='stylesheet'][href*='lab.css']")).to_have_count(1)
             expect(page.locator('input[name="Serial"]')).to_be_visible()
             page.locator('input[name="Serial"]').fill("BROWSER-E2E-001")
             page.locator('input[name="shot"]').fill("501")
@@ -38,7 +52,12 @@ def main():
             page.goto("http://127.0.0.1:8000/admin/shots/edit/?id=1")
             expect(page.locator('[name="custom_parameters-0-value"]')).to_have_value("3.75")
             page.screenshot(path=str(artifacts / "gyrotron-edit.png"), full_page=True)
-            print("Chromium: click Add, save, fresh form reset, history edit OK.")
+            # Verify layout on a narrow viewport with real browser rendering.
+            page.set_viewport_size({"width": 390, "height": 844})
+            page.goto("http://127.0.0.1:8000/admin/")
+            expect(page.get_by_role("heading", name="数据总览")).to_be_visible()
+            page.screenshot(path=str(artifacts / "gyrotron-mobile.png"), full_page=True)
+            print("Chromium: modern dashboard, list, mobile, and inline parameter CRUD OK.")
         except Exception:
             page.screenshot(path=str(artifacts / "gyrotron-failure.png"), full_page=True)
             raise

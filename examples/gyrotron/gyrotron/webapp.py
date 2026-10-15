@@ -6,15 +6,32 @@ from pathlib import Path
 from typing import Any
 
 from flask import Flask, redirect, url_for
-from flask_admin import Admin
+from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.theme import Bootstrap4Theme
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from sqlalchemy.pool import StaticPool
 
 from .admin import ShotAdmin
-from .models import Base, Shot
+from .models import Base, CustomParameter, Shot
 
 db = SQLAlchemy(model_class=Base)
+
+
+class LabDashboard(AdminIndexView):
+    """Database-backed overview; record CRUD stays in Flask-Admin."""
+
+    @expose("/")
+    def index(self) -> str:
+        recent_shots = db.session.query(Shot).order_by(Shot.id.desc()).limit(6).all()
+        return self.render(
+            "gyrotron/dashboard.html",
+            total_shots=db.session.query(func.count(Shot.id)).scalar() or 0,
+            total_serials=db.session.query(func.count(func.distinct(Shot.Serial))).scalar() or 0,
+            total_parameters=db.session.query(func.count(CustomParameter.id)).scalar() or 0,
+            latest_date=db.session.query(func.max(Shot.date)).scalar(),
+            recent_shots=recent_shots,
+        )
 
 
 def create_app(test_config: dict[str, Any] | None = None) -> Flask:
@@ -48,7 +65,12 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     def health():
         return {"status": "ok"}
 
-    admin = Admin(app, name="回旋管运行参数记录系统", theme=Bootstrap4Theme())
+    admin = Admin(
+        app,
+        name="回旋管运行参数记录系统",
+        index_view=LabDashboard(name="数据概览"),
+        theme=Bootstrap4Theme(base_template="gyrotron/base.html", fluid=True),
+    )
     admin.add_view(ShotAdmin(Shot, db, name="炮次记录", endpoint="shots"))
     app.extensions["gyrotron_session"] = db.session
     return app

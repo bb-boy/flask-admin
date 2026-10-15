@@ -10,6 +10,10 @@ from .validation import SUPPORTED_TYPES, RecordValidationError, validate_shot
 
 
 class ShotAdmin(ModelView):
+    list_template = "gyrotron/list.html"
+    create_template = "gyrotron/create.html"
+    edit_template = "gyrotron/edit.html"
+    search_placeholder = "输入回旋管序列号..."
     can_view_details = True
     can_export = True
     export_types = ["csv"]  # noqa: RUF012
