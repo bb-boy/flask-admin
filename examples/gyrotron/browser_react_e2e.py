@@ -71,5 +71,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-[executed on device: pangdeMacBook-Neo.local (958dd551-5442-478f-801a-f710221ce740)]

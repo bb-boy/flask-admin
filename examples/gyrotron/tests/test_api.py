@@ -146,5 +146,3 @@ def test_api_input_validation_and_search_pagination_limits():
     for query in ("page=0", "page_size=1000", "page=none"):
         assert client.get("/api/v1/shots?" + query).status_code == 400
     assert client.get("/api/v1/shots/9999").status_code == 404
-
-[executed on device: pangdeMacBook-Neo.local (958dd551-5442-478f-801a-f710221ce740)]
