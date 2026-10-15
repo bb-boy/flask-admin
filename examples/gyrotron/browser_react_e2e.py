@@ -60,7 +60,7 @@ def main():
             page.goto("http://127.0.0.1:8000/app/records")
             page.once("dialog", lambda dialog: dialog.accept())
             page.get_by_role("button", name="删除 REACT-CHROMIUM-001 第 10000000002 炮").click()
-            expect(page.get_by_text("没有找到符合条件的炮次记录。")).to_be_visible()
+            expect(page.get_by_text("REACT-CHROMIUM-001", exact=True)).to_have_count(0)
             print("React Chromium: Chinese UI, new/edit/delete, independent params, mobile OK")
         except Exception:
             page.screenshot(path=str(path / "react-failure.png"), full_page=True)
