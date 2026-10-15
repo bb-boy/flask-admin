@@ -86,7 +86,7 @@ def optional_string(value: Any, key: str, limit: int | None = None) -> str | Non
 
 
 def parse_bigint(value: Any, key: str) -> int:
-    if isinstance(value, bool) or not re.fullmatch(r"[+-]?\d+", str(value or "")):
+    if isinstance(value, bool) or not re.fullmatch(r"[+-]?\d+", str("" if value is None else value)):
         raise RecordValidationError(f"{key} 必须是整数")
     parsed = int(str(value))
     if not BIGINT_MIN <= parsed <= BIGINT_MAX:

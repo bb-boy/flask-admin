@@ -31,6 +31,21 @@ jobs:
       - name: Run automated tests
         run: python -m pytest -q
 
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build React and TypeScript UI
+        working-directory: examples/gyrotron/frontend
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Check Chinese interface bundle exists
+        run: test -s examples/gyrotron/gyrotron/static/app/index.html
+
   postgres-integration:
     runs-on: ubuntu-latest
     services:
@@ -76,6 +91,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build modern Chinese React UI
+        working-directory: examples/gyrotron/frontend
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
       - name: Install app and browser dependencies
         working-directory: examples/gyrotron
         run: |
@@ -94,6 +117,9 @@ jobs:
       - name: Test real-browser inline parameter interaction
         working-directory: examples/gyrotron
         run: python browser_e2e.py
+      - name: Test React UI with real Chromium browser
+        working-directory: examples/gyrotron
+        run: python browser_react_e2e.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

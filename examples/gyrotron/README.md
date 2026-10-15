@@ -53,3 +53,28 @@ Flask-Admin 上游使用 BSD-3-Clause 许可证：https://github.com/pallets-eco
 
 ## 端到端浏览器测试
 GitHub Actions 使用真实 Chromium 浏览器执行 `browser_e2e.py`，覆盖点击“添加参数”、录入保存、新炮次界面重置、历史炮次打开与参数修改，并在 Actions 中上传截图产物；真实用户仍须确认部署后的界面与网络可用性。
+
+## 现代中文前端（React + TypeScript）
+
+主界面地址：\`/app/\`（根路径自动跳转），原始 Flask-Admin 路径 \`/admin/\` 仍保留用于兼容性测试与旧书签，不再是推荐入口。
+
+- 前端：React 19、TypeScript、Vite 7、Tailwind CSS 4、TanStack Query、Recharts、Lucide；
+- 后端：Flask JSON API (\`/api/v1\`)，复用现有 SQLAlchemy 模型、校验逻辑和 PostgreSQL 数据；
+- 纯中文操作：概览、列表检索、分页、日期、固定数值、自定义参数（五种类型）、编辑与删除确认；
+- 兼容局域网离线运行：构建后样式和 JS 由 Flask 本地静态资源提供，不依赖外部 CDN；
+- 没有前端认证：仅允许授权内网 / SSH 隧道访问，切勿直接公网开放。
+
+### 本地前端开发
+
+\`\`\`bash
+cd frontend
+npm install
+npm run build  # 构建到 ../gyrotron/static/app
+# 返回 ../ 目录，然后启动 Flask 访问 /app/
+\`\`\`
+
+开发前端时可以用 \`npm run dev\` 启动 Vite，所有 API 请求通过代理到本地 8000 端口的 Flask。前端独立部署时还需设置路由回退至 index.html。
+
+### 容器部署
+
+Dockerfile 使用 Node 构建阶段生成静态前端，最终仅保留 Python/Flask 运行时。应用无需新增前端端口，数据仍存放于既有 PostgreSQL Volume。新版部署前应先确认 GitHub Actions 的 React 构建、Chromium UI、PostgreSQL 集成与旧业务测试全部通过。

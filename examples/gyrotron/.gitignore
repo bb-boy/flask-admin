@@ -12,3 +12,7 @@ instance/
 backups/
 
 artifacts/
+
+frontend/node_modules/
+gyrotron/static/app/
+frontend/dist/
