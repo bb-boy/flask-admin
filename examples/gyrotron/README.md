@@ -45,8 +45,11 @@ Web 服务只映射宿主机 127.0.0.1:8000；参见 deploy/nginx.conf.example�
 Flask-Admin 上游使用 BSD-3-Clause 许可证：https://github.com/pallets-eco/flask-admin
 
 ## 数据备份与部署验收
-- 运行 \`bash scripts/backup-postgres.sh\` 生成 PostgreSQL 自定义格式备份（\`backups/\` 已加入忽略列表），正式使用还应配置备份计划和离机保存。
-- 恢复前停止 Web 写入，先在测试库验证。参考：\`docker compose exec -T db pg_restore --clean --if-exists --no-owner -U gyrotron -d gyrotron < backups/备份文件.dump\`。
+- 运行 `bash scripts/backup-postgres.sh` 生成 PostgreSQL 自定义格式备份（`backups/` 已加入忽略列表），正式使用还应配置备份计划和离机保存。
+- 恢复前停止 Web 写入，先在测试库验证。参考：`docker compose exec -T db pg_restore --clean --if-exists --no-owner -U gyrotron -d gyrotron < backups/备份文件.dump`。
 - Nginx 示例默认只允许本机访问；按所内实际 IP 网段更新 allow，再执行 nginx -t 验证。
 - GitHub Actions 临时 PostgreSQL 17 测试保存、重新连接和历史查看，也校验 Docker Compose 并构建 Docker 镜像。
 - 所内 Log 主机、内网网段、备份位置必须在实际服务器现场验收。本仓库不会自动修改所内服务器。
+
+## 端到端浏览器测试
+GitHub Actions 使用真实 Chromium 浏览器执行 `browser_e2e.py`，覆盖点击“添加参数”、录入保存、新炮次界面重置、历史炮次打开与参数修改，并在 Actions 中上传截图产物；真实用户仍须确认部署后的界面与网络可用性。
