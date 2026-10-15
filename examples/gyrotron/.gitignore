@@ -10,3 +10,5 @@ instance/
 *.sqlite3
 
 backups/
+
+artifacts/
