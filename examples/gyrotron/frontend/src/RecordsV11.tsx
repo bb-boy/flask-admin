@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "./api";
-import { FIXED_FIELDS, type FixedKey, type Shot, type ShotForm } from "./types";
+import { FIXED_FIELDS, type FixedKey, type Shot } from "./types";
 
 const defaultColumns: FixedKey[] = ["iplen", "Uc", "Ib", "Im"];
 const dateLabels = ["Serial", "shot", "date"];
@@ -11,71 +11,8 @@ type FilterCondition = {
   value: string; data_type: "DECIMAL" | "DATE" | "TEXT";
 };
 
-function InlineEdit({ shotId, onClose }: { shotId: number; onClose: () => void }) {
-  const queryClient = useQueryClient();
-  const query = useQuery({ queryKey: ["shot", shotId], queryFn: () => api.get(shotId) });
-  const [draft, setDraft] = useState<ShotForm | null>(null);
-  const [error, setError] = useState("");
-  const [leaveConfirm, setLeaveConfirm] = useState(false);
-  const saved = useRef("");
-  useEffect(() => {
-    if (!query.data) return;
-    const { id: _id, ...rest } = query.data;
-    void _id;
-    setDraft(rest);
-    saved.current = JSON.stringify(rest);
-  }, [query.data]);
-  const changed = draft !== null && JSON.stringify(draft) !== saved.current;
-  const update = useMutation({
-    mutationFn: (form: ShotForm) => api.update(shotId, form),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["shots"] }),
-        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-        queryClient.invalidateQueries({ queryKey: ["shot", shotId] }),
-      ]);
-      onClose();
-    },
-  });
-  function attemptClose() {
-    if (!changed) onClose();
-    else setLeaveConfirm(true);
-  }
-  if (query.isPending || !draft) return <div className="v11-inline"><p>正在加载可编辑字段...</p><button onClick={attemptClose}>取消</button></div>;
-  if (query.isError) return <div className="form-error">无法加载炮次 <button onClick={attemptClose}>关闭</button></div>;
-  return <div className="v11-inline">
-    <div className="v11-panel-heading"><strong>编辑本行：{draft.Serial} / {draft.shot}</strong>
-      <Link to={"/records/" + shotId + "/edit"} onClick={event => {
-        if (changed && !window.confirm("有未保存的本行更改，确定放弃并进入完整编辑页吗？")) event.preventDefault();
-      }}>完整编辑（修改自定义参数定义）</Link></div>
-    <div className="v11-edit-fields">
-      <label>日期<input type="date" value={draft.date || ""} onChange={e => setDraft({ ...draft, date: e.target.value })} /></label>
-      {FIXED_FIELDS.map(field => <label key={field.key}>{field.label} ({field.unit})
-        <input inputMode="decimal" value={draft[field.key] ?? ""}
-          onChange={e => setDraft(prev => prev && ({ ...prev, [field.key]: e.target.value }))} /></label>)}
-      {draft.custom_parameters?.map((p, index) => <label key={p.id ?? p.name}>{p.name} · 值
-        <input value={p.value ?? ""} onChange={e => setDraft(prev => prev && ({
-          ...prev, custom_parameters: (prev.custom_parameters || []).map((entry, i) =>
-            i === index ? { ...entry, value: e.target.value } : entry),
-        }))} /></label>)}
-    </div>
-    {error && <div role="alert" className="form-error">{error}</div>}
-    {leaveConfirm && <div role="alertdialog" aria-label="未保存的修改" className="v11-confirm-leave">
-      <span>本行有未保存的修改。请选择操作：</span>
-      <button className="btn btn-primary" disabled={update.isPending} onClick={async () => {
-        try { await update.mutateAsync(draft); } catch (exc) { setError(String(exc)); }
-      }}>保存本行</button>
-      <button className="btn btn-secondary" onClick={onClose}>放弃修改</button>
-      <button className="btn btn-secondary" onClick={() => setLeaveConfirm(false)}>继续编辑</button>
-    </div>}
-    <div className="v11-inline-actions"><button className="btn btn-secondary" onClick={attemptClose}>取消</button>
-      <button className="btn btn-primary" disabled={!changed || update.isPending}
-        onClick={async () => { try { await update.mutateAsync(draft); } catch (exc) { setError(String(exc)); } }}>
-        {update.isPending ? "正在保存..." : "保存本行"}</button></div>
-  </div>;
-}
-
 export default function RecordsV11() {
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const serials = useQuery({ queryKey: ["serials"], queryFn: api.serials });
   const client = useQueryClient();
@@ -87,7 +24,6 @@ export default function RecordsV11() {
   });
   const suggestions = useQuery({ queryKey: ["suggestions", serial], queryFn: () => api.suggestions(serial), enabled: !!serial });
   const [customCols, setCustomCols] = useState<string[]>([]);
-  const [rowDraft, setRowDraft] = useState<number | null>(null);
   const [activeCell, setActiveCell] = useState<{ id: number; column: number } | null>(null);
   const [selected, setSelected] = useState<number[]>([]);
   const [scroll, setScroll] = useState(0);
@@ -107,7 +43,7 @@ export default function RecordsV11() {
     if (serial) localStorage.setItem("gyrotron-current-serial", serial);
     try { setCustomCols(JSON.parse(localStorage.getItem("gyrotron-custom-cols-" + serial) || "[]")); }
     catch { setCustomCols([]); }
-    setSelected([]); setRowDraft(null); setScroll(0);
+    setSelected([]); setScroll(0);
     if (scrollBox.current) scrollBox.current.scrollTop = 0;
   }, [serial]);
   const customConditions = useMemo((): FilterCondition[] => {
@@ -169,8 +105,7 @@ export default function RecordsV11() {
       if (navigator.clipboard?.writeText) void navigator.clipboard.writeText(value).catch(() => {});
       return;
     }
-    if (event.key === "Enter") { event.preventDefault(); setRowDraft(rows[current].id); return; }
-    if (event.key === "Escape") { event.preventDefault(); setRowDraft(null); return; }
+    if (event.key === "Enter") { event.preventDefault(); navigate("/records/" + rows[current].id + "/edit"); return; }
     const offsets: Record<string, [number, number]> = {
       ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1],
     };
@@ -192,7 +127,6 @@ export default function RecordsV11() {
     setParams(previous => { const next = new URLSearchParams(previous); if (value) next.set(key, value); else next.delete(key); return next; });
   }
   function changeSerial(value: string) {
-    if (rowDraft !== null && !window.confirm("本行仍处于编辑状态。切换回旋管可能丢弃未保存的修改，确定继续？")) return;
     setParams(previous => { const next = new URLSearchParams(previous); next.set("serial", value); return next; });
   }
   function setCustomConditions(next: FilterCondition[]) {
@@ -309,7 +243,7 @@ export default function RecordsV11() {
     </section>
     {busy && <p role="status">{busy}</p>}{error && <p className="form-error" role="alert">{error}</p>}
     {listing.isError && <p className="form-error">加载失败：{String(listing.error)}</p>}
-    <div className="v11-muted">点击单元格后，可用方向键移动、Enter 编辑、Ctrl/Cmd+C 复制选中值。</div>
+    <div className="v11-muted">点击单元格后，可用方向键移动、Enter 进入完整编辑、Ctrl/Cmd+C 复制选中值。</div>
     <div className={"v11-table-viewport " + (compact ? "v11-compact" : "")} ref={scrollBox}
       tabIndex={0} aria-label="可用键盘操作的炮次记录表" onKeyDown={onGridKeyDown}
       onScroll={event => {
@@ -328,14 +262,11 @@ export default function RecordsV11() {
         {customCols.map(name => <th key={name}>{name}</th>)}<th>操作</th>
       </tr></thead><tbody>
         {start > 0 && <tr aria-hidden="true"><td colSpan={colCount} style={{ padding: 0, height: start * rowHeight }} /></tr>}
-        {visible.map(row => <FragmentRow key={row.id} row={row} colCount={colCount} cols={cols} customCols={customCols}
+        {visible.map(row => <FragmentRow key={row.id} row={row} cols={cols} customCols={customCols}
           selected={selected.includes(row.id)} toggle={() => setSelected(p => p.includes(row.id) ? p.filter(id => id !== row.id) : [...p, row.id])}
           activeCol={activeCell?.id === row.id ? activeCell.column : null}
           selectCell={column => { setActiveCell({ id: row.id, column }); scrollBox.current?.focus({ preventScroll: true }); }}
-          editing={rowDraft === row.id} edit={() => {
-            if (rowDraft !== null) return;
-            setRowDraft(row.id);
-          }} close={() => setRowDraft(null)} />)}
+          />)}
         {rows.length > start + visible.length && <tr aria-hidden="true"><td colSpan={colCount} style={{ padding: 0, height: (rows.length - start - visible.length) * rowHeight }} /></tr>}
       </tbody></table>
       {busyLoading && <div className="loading-state">正在加载炮次...</div>}
@@ -345,13 +276,12 @@ export default function RecordsV11() {
   </div>;
 }
 
-function FragmentRow({ row, cols, customCols, colCount, selected, toggle, editing, edit, close, activeCol, selectCell }: {
-  row: Shot; cols: FixedKey[]; customCols: string[]; colCount: number;
-  selected: boolean; toggle: () => void; editing: boolean; edit: () => void; close: () => void;
+function FragmentRow({ row, cols, customCols, selected, toggle, activeCol, selectCell }: {
+  row: Shot; cols: FixedKey[]; customCols: string[];
+  selected: boolean; toggle: () => void;
   activeCol: number | null; selectCell: (column: number) => void;
 }) {
-  return <>
-    <tr className={editing ? "v11-editing-row" : ""} data-shot-id={row.id}>
+  return <tr data-shot-id={row.id}>
       <td className="v11-pin"><input type="checkbox" aria-label={"选择第" + row.shot + "炮"} checked={selected} onChange={toggle} /></td>
       <td className={"v11-pin " + (activeCol === 0 ? "v11-active-cell" : "")} onClick={() => selectCell(0)}>{row.Serial}</td>
       <td className={"v11-pin " + (activeCol === 1 ? "v11-active-cell" : "")} onClick={() => selectCell(1)}>{row.shot}</td>
@@ -363,9 +293,6 @@ function FragmentRow({ row, cols, customCols, colCount, selected, toggle, editin
         return <td key={name} className={activeCol === index + cols.length + 3 ? "v11-active-cell" : ""}
           onClick={() => selectCell(index + cols.length + 3)}>{!p ? "未添加" : p.value === null || p.value === "" ? "未填写" : p.value}</td>;
       })}
-      <td><button className="v11-cell-action" disabled={editing} onClick={edit}>{editing ? "编辑中" : "编辑本行"}</button>
-        <Link className="v11-cell-action" to={"/records/" + row.id + "/edit"}>完整编辑</Link></td>
-    </tr>
-    {editing && <tr><td colSpan={colCount}><InlineEdit shotId={row.id} onClose={close} /></td></tr>}
-  </>;
+      <td><Link className="v11-cell-action" to={"/records/" + row.id + "/edit"}>完整编辑</Link></td>
+  </tr>;
 }

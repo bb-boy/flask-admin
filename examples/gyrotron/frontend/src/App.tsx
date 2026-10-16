@@ -34,7 +34,6 @@ function Shell() {
       <header className="v11-topbar">
         <Link to="/" className="v11-brand"><Activity size={22} /><strong>回旋管实验记录</strong></Link>
         <nav aria-label="主导航"><NavLink to="/" end>工作台</NavLink><NavLink to="/records">炮次记录</NavLink></nav>
-        <Link to="/records/new" className="btn btn-primary"><Plus size={17} />新增炮次</Link>
       </header>
       <main className="content">
         <Routes>

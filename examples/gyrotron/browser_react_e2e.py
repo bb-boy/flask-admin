@@ -30,7 +30,10 @@ def main():
             assert page.get_by_text("最近录入的炮次").count() == 0
             page.screenshot(path=str(out / "v11-dashboard.png"), full_page=True)
 
-            page.get_by_role("link", name="新增炮次").first.click()
+            # The dashboard/header must not show the create action.
+            expect(page.get_by_role("link", name="新增炮次")).to_have_count(0)
+            page.get_by_role("link", name="炮次记录").first.click()
+            page.get_by_role("link", name="+ 新增炮次").click()
             expect(page.get_by_role("heading", name="新增炮次记录")).to_be_visible()
             page.get_by_placeholder("例如：GYRO-001").fill(SERIAL)
             # The shot suggestion is async; user may choose a custom BIGINT.
@@ -65,22 +68,24 @@ def main():
             page.get_by_label("条件2参数值").fill("4")
             expect(page.get_by_text(SHOT, exact=True)).to_be_visible()
             page.get_by_role("button", name="清空筛选").click()
+            # Inline editing was removed; Enter on a selected cell opens full edit.
+            expect(page.get_by_role("button", name="编辑本行")).to_have_count(0)
+            expect(page.get_by_role("link", name="完整编辑").first).to_be_visible()
             row = page.locator("tr[data-shot-id]").first
             row.locator("td").nth(2).click()
             page.locator(".v11-table-viewport").press("ArrowRight")
             expect(row.locator("td").nth(3)).to_have_class("v11-active-cell")
             page.locator(".v11-table-viewport").press("Enter")
-            expect(page.get_by_text("编辑本行：" + SERIAL + " / " + SHOT)).to_be_visible()
-            page.locator(".v11-inline input").last.fill("4.5")
-            page.get_by_role("button", name="取消").last.click()
-            expect(page.get_by_role("alertdialog", name="未保存的修改")).to_be_visible()
-            page.get_by_role("button", name="继续编辑").click()
-            page.get_by_role("button", name="保存本行").click()
-            expect(page.get_by_text("编辑本行：" + SERIAL + " / " + SHOT)).to_have_count(0)
-            page.get_by_role("link", name="完整编辑").first.click()
-            expect(page.get_by_placeholder("参数值")).to_have_value("4.5")
+            expect(page.get_by_role("heading", name="编辑炮次记录")).to_be_visible()
+            expect(page.get_by_placeholder("参数值")).to_have_value("3.25")
+            page.get_by_placeholder("参数值").fill("4.5")
             assert page.get_by_placeholder("例如：GYRO-001").is_disabled()
             assert page.get_by_placeholder("请输入整数炮号").is_disabled()
+            page.get_by_role("button", name="保存并返回列表").click()
+            expect(page.get_by_role("heading", name="炮次记录", exact=True)).to_be_visible()
+            expect(page.get_by_role("button", name="编辑本行")).to_have_count(0)
+            page.get_by_role("link", name="完整编辑").first.click()
+            expect(page.get_by_placeholder("参数值")).to_have_value("4.5")
             page.get_by_role("button", name="保存并返回列表").click()
             expect(page.get_by_role("heading", name="炮次记录", exact=True)).to_be_visible()
 
@@ -94,6 +99,13 @@ def main():
             page.goto(BASE + "/app/")
             expect(page.get_by_role("heading", name="实验工作台")).to_be_visible()
             expect(page.get_by_role("img", name="脉宽分布蜂群散点图")).to_be_visible()
+            expect(page.get_by_text("iplen (ms) · 线性坐标")).to_be_visible()
+            assert page.get_by_text("对数坐标").count() == 0
+            # A positive pulse with only one point sits at the upper bound of a 0..max linear scale.
+            cx = page.get_by_role(
+                "button", name="V11-CHROMIUM-TEST-01 第" + SHOT + "炮，脉宽 900000.0000000000ms"
+            ).get_attribute("cx")
+            assert float(cx) == 938
             page.get_by_role(
                 "button", name="V11-CHROMIUM-TEST-01 第" + SHOT + "炮，脉宽 900000.0000000000ms"
             ).click()

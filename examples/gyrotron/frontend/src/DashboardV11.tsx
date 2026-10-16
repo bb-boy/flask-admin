@@ -14,17 +14,18 @@ function PulseChart({ points, onSelect }: {
   if (!points.length) return <div className="empty-small">该范围没有可绘制的正脉宽数据</div>;
   const values = points.map(p => Number(p.iplen)).filter(v => Number.isFinite(v) && v > 0);
   if (!values.length) return <div className="empty-small">暂无有效脉宽数据</div>;
-  const lo = Math.floor(Math.log10(Math.min(...values)));
-  const hi = Math.ceil(Math.log10(Math.max(...values))) || lo + 1;
-  const span = Math.max(1, hi - lo);
-  const x = (value: number) => 48 + (Math.log10(value) - lo) / span * 890;
-  const ticks = Array.from({ length: hi - lo + 1 }, (_, i) => Math.pow(10, lo + i));
+  const maximum = Math.max(1, ...values);
+  const x = (value: number) => 48 + (value / maximum) * 890;
+  const ticks = Array.from({ length: 6 }, (_, i) => (maximum * i) / 5);
+  const formatTick = (value: number) => new Intl.NumberFormat("zh-CN", {
+    notation: "compact", maximumFractionDigits: 1,
+  }).format(value);
   const positionY = (id: number) => 145 + (((id * 2654435761) >>> 0) % 1000 / 1000 - .5) * 170;
   return <div className="pulse-scroll"><svg viewBox="0 0 1000 295" className="pulse-svg" role="img"
-    aria-label="脉宽分布蜂群散点图，横轴为脉宽毫秒的对数坐标，纵向抖动没有物理意义">
+    aria-label="脉宽分布蜂群散点图，横轴为脉宽毫秒的线性坐标，纵向抖动没有物理意义">
     {ticks.map(t => <g key={t}>
       <line x1={x(t)} x2={x(t)} y1="19" y2="260" stroke="#e9eef5" strokeDasharray="3 5" />
-      <text x={x(t)} y="284" fontSize="11" textAnchor="middle" fill="#8190a5">{t.toExponential(0)}</text>
+      <text x={x(t)} y="284" fontSize="11" textAnchor="middle" fill="#8190a5">{formatTick(t)}</text>
     </g>)}
     <line x1="48" y1="260" x2="938" y2="260" stroke="#b5c2d6" />
     {points.map(p => {
@@ -37,7 +38,7 @@ function PulseChart({ points, onSelect }: {
         <title>{p.Serial} / {p.shot} · {p.iplen} ms · {p.date || "无日期"}</title>
       </circle>;
     })}
-    <text x="498" y="294" textAnchor="middle" fill="#7184a0" fontSize="10">iplen (ms) · 对数坐标</text>
+    <text x="498" y="294" textAnchor="middle" fill="#7184a0" fontSize="10">iplen (ms) · 线性坐标</text>
   </svg></div>;
 }
 
