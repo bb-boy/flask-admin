@@ -38,6 +38,9 @@ def main():
             page.get_by_placeholder("例如：GYRO-001").fill(SERIAL)
             # The shot suggestion is async; user may choose a custom BIGINT.
             page.get_by_placeholder("请输入整数炮号").fill(SHOT)
+            # An in-flight auto-suggestion must not overwrite manually entered digits.
+            page.wait_for_timeout(350)
+            expect(page.get_by_placeholder("请输入整数炮号")).to_have_value(SHOT)
             page.get_by_placeholder("请输入测量值").first.fill("900000")
             page.get_by_role("button", name="添加自定义参数").click()
             page.get_by_placeholder("例如：It").fill("custom_test")

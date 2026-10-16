@@ -73,6 +73,8 @@ function ShotEditor() {
   const [urlParams] = useSearchParams();
   const client = useQueryClient();
   const nextSave = useRef(false);
+  const shotTouched = useRef(false);
+  const preparingNext = useRef(false);
   const initialized = useRef(false);
   const [dirty, setDirty] = useState(false);
   const [form, setForm] = useState<ShotForm>(blankShot);
@@ -103,8 +105,8 @@ function ShotEditor() {
     if (currentSerial) setForm(prev => ({...prev, Serial: currentSerial}));
   }, [editMode, urlParams]);
   useEffect(() => {
-    if (!editMode && !form.shot && nextNumber.data?.shot) {
-      setForm(prev => prev.shot ? prev : { ...prev, shot: nextNumber.data!.shot });
+    if (!editMode && !shotTouched.current && !preparingNext.current && !form.shot && nextNumber.data?.shot) {
+      setForm(prev => prev.shot || shotTouched.current ? prev : { ...prev, shot: nextNumber.data!.shot });
     }
   }, [editMode, nextNumber.data, form.shot]);
   useEffect(() => {
@@ -149,17 +151,24 @@ function ShotEditor() {
       localStorage.removeItem("gyrotron-shot-draft-new");
       if (!editMode && nextSave.current) {
         nextSave.current = false;
+        preparingNext.current = true;
+        shotTouched.current = false;
         setForm({ ...blankShot(), Serial: saved.Serial, shot: "" });
         try {
           const suggested = await api.nextShot(saved.Serial);
-          setForm(prev => ({ ...prev, shot: suggested.shot }));
+          if (!shotTouched.current) {
+            setForm(prev => prev.shot ? prev : { ...prev, shot: suggested.shot });
+          }
         } catch { /* User can supply shot manually when suggestions unavailable. */ }
+        finally { preparingNext.current = false; }
       } else {
         navigate("/records?serial=" + encodeURIComponent(saved.Serial));
       }
     },
   });
   function updateField(key: keyof ShotForm, value: string) {
+    if (key === "shot") shotTouched.current = true;
+    if (key === "Serial" && !editMode) shotTouched.current = false;
     setDirty(true);
     setForm(prev => ({ ...prev, [key]: value, ...(key === "Serial" && !editMode ? { shot: "" } : {}) }));
   }
@@ -219,7 +228,7 @@ function ShotEditor() {
           <div><h2>炮次基本信息</h2><p>回旋管序列号与炮号共同标识一次实验</p></div><span className="section-step">01 / 04</span></div>
         <div className="field-grid field-grid-three">
           <Field label="回旋管序列号" required><input disabled={editMode} maxLength={120} required placeholder="例如：GYRO-001" value={form.Serial} onChange={e => updateField("Serial", e.target.value)} /></Field>
-          <Field label="炮号" required><input disabled={editMode} required inputMode="numeric" placeholder="请输入整数炮号" value={form.shot} onChange={e => updateField("shot", e.target.value)} /></Field>
+          <Field label="炮号" required><input disabled={editMode} required inputMode="numeric" placeholder="请输入整数炮号" value={form.shot} onFocus={() => { shotTouched.current = true; }} onChange={e => updateField("shot", e.target.value)} /></Field>
           <Field label="实验日期" required><input required type="date" value={form.date || ""} onChange={e => updateField("date", e.target.value)} /></Field>
         </div>
       </section>
