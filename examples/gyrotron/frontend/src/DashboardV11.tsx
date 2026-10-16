@@ -11,41 +11,94 @@ function PulseChart({ points, onSelect }: {
   points: { id: number; Serial: string; shot: string; iplen: string; date: string | null }[];
   onSelect: (id: number) => void;
 }) {
-  if (!points.length) return <div className="empty-small">该范围没有可绘制的正脉宽数据</div>;
-  const values = points.map(p => Number(p.iplen)).filter(v => Number.isFinite(v) && v > 0);
-  if (!values.length) return <div className="empty-small">暂无有效脉宽数据</div>;
-  // Input is stored in milliseconds, while scientists read the x-axis in seconds.
-  const maximumMilliseconds = Math.max(...values);
-  const maximumSeconds = maximumMilliseconds / 1000;
-  const axisMaximumSeconds = Math.max(300, Math.ceil(maximumSeconds / 300) * 300);
-  const x = (milliseconds: number) => 48 + (milliseconds / 1000 / axisMaximumSeconds) * 890;
-  const ticks = Array.from({ length: 6 }, (_, i) => (axisMaximumSeconds * i) / 5);
-  // Every point belongs to a stable vertical band; the vertical position carries no physical meaning.
-  const positionY = (id: number) => 145 + (((id * 2654435761) >>> 0) % 1000 / 1000 - .5) * 204;
-  const radius = (milliseconds: number) => 2.5 + 10 * Math.sqrt(milliseconds / maximumMilliseconds);
-  const cloudColor = (seconds: number) =>
-    seconds >= 1000 ? "#d4935c" : seconds >= 500 ? "#7382bd" : "#68a9be";
-  return <div className="pulse-scroll"><svg viewBox="0 0 1000 295" className="pulse-svg pulse-cloud" role="img"
-    aria-label="脉宽分布气泡云图，横轴为脉宽秒数的线性坐标，脉宽越长气泡越大，纵向抖动没有物理意义">
-    {ticks.map(t => <g key={t}>
-      <line x1={x(t * 1000)} x2={x(t * 1000)} y1="19" y2="260" stroke="#e9eef5" strokeDasharray="3 5" />
-      <text x={x(t * 1000)} y="284" fontSize="11" textAnchor="middle" fill="#8190a5">{Math.round(t).toLocaleString("zh-CN")}</text>
-    </g>)}
-    <line x1="48" y1="260" x2="938" y2="260" stroke="#b5c2d6" />
-    {[...points].sort((a, b) => Number(b.iplen) - Number(a.iplen)).map(p => {
-      const value = Number(p.iplen);
-      const seconds = value / 1000;
-      return <circle key={p.id} className="pulse-dot" cx={x(value)} cy={positionY(p.id)}
-        r={radius(value)} fill={cloudColor(seconds)} fillOpacity=".48"
-        stroke={cloudColor(seconds)} strokeWidth=".6" strokeOpacity=".25" tabIndex={0}
-        role="button" aria-label={p.Serial + " 第" + p.shot + "炮，脉宽 " + p.iplen + "ms"}
-        onClick={() => onSelect(p.id)}
-        onKeyDown={event => { if (event.key === "Enter") onSelect(p.id); }}>
-        <title>{p.Serial} / {p.shot} · {seconds.toFixed(2)} s · {p.date || "无日期"}</title>
-      </circle>;
-    })}
-    <text x="498" y="294" textAnchor="middle" fill="#7184a0" fontSize="10">iplen (s) · 线性坐标 · 圆点大小代表脉宽</text>
-  </svg></div>;
+  const valid = useMemo(() => points
+    .map(p => ({ ...p, milliseconds: Number(p.iplen) }))
+    .filter(p => Number.isFinite(p.milliseconds) && p.milliseconds > 0), [points]);
+  if (!valid.length) return <div className="empty-small">该范围暂无有效脉宽数据</div>;
+
+  const sorted = [...valid].sort((a, b) => a.milliseconds - b.milliseconds);
+  const maximum = sorted[sorted.length - 1].milliseconds;
+  const minimum = sorted[0].milliseconds;
+  const median = sorted[Math.floor(sorted.length / 2)].milliseconds;
+  const axisSeconds = Math.max(300, Math.ceil(maximum / 300000) * 300);
+  const px = (milliseconds: number) => 60 + milliseconds / 1000 / axisSeconds * 880;
+  const ticks = Array.from({ length: 6 }, (_, i) => axisSeconds * i / 5);
+  const fmt = (milliseconds: number) => (milliseconds / 1000).toLocaleString("zh-CN", { maximumFractionDigits: 1 });
+
+  // Smooth density depicts the complete data distribution without turning
+  // thousands of overlapping bubbles into an opaque patch.
+  const binCount = 50;
+  const counts = Array.from({ length: binCount }, () => 0);
+  sorted.forEach(p => { counts[Math.min(binCount - 1, Math.floor(p.milliseconds / 1000 / axisSeconds * binCount))]++; });
+  const density = counts.map((_, i) => [1, 2, 3, 2, 1].reduce((sum, weight, j) =>
+    sum + (counts[Math.min(binCount - 1, Math.max(0, i + j - 2))] || 0) * weight, 0) / 9);
+  const maxDensity = Math.max(1, ...density);
+  const wave = density.map(value => 22 + Math.sqrt(value / maxDensity) * 71);
+  const centerY = 154;
+  const polygon = [
+    ...wave.map((height, i) => String(60 + (i + 0.5) * 880 / binCount) + "," + String(centerY - height)),
+    ...wave.map((height, i) => String(60 + (i + 0.5) * 880 / binCount) + "," + String(centerY + height)).reverse(),
+  ].join(" ");
+  const featured = (id: number) => ((Math.imul(id, 2654435761) >>> 0) % 17) < 2;
+  const positionY = (id: number, value: number) => {
+    const hash = Math.imul(id, 1597334677) >>> 0;
+    const band = Math.min(binCount - 1, Math.floor(value / 1000 / axisSeconds * binCount));
+    const height = wave[band] * 0.86;
+    return centerY + ((hash % 10000) / 9999 * 2 - 1) * height;
+  };
+  const radius = (value: number) => 1.35 + 6.7 * Math.sqrt(value / maximum);
+  const color = (seconds: number) =>
+    seconds / axisSeconds > .67 ? "#8277ce" : seconds / axisSeconds > .34 ? "#5a95cc" : "#63b1b5";
+  const bubble = (p: typeof valid[number]) => {
+    const prominent = featured(p.id);
+    return <circle key={p.id} className={"pulse-dot " + (prominent ? "pulse-dot-featured" : "pulse-dot-soft")}
+      cx={px(p.milliseconds)} cy={positionY(p.id, p.milliseconds)}
+      r={radius(p.milliseconds)} fill={color(p.milliseconds / 1000)}
+      fillOpacity={prominent ? ".44" : ".065"} stroke={prominent ? "#ffffff" : "none"}
+      strokeOpacity=".8" strokeWidth={prominent ? ".7" : 0}
+      tabIndex={prominent ? 0 : -1} role="button"
+      aria-label={p.Serial + " 第" + p.shot + "炮，脉宽 " + p.iplen + "ms"}
+      onClick={() => onSelect(p.id)}
+      onKeyDown={event => { if (event.key === "Enter") onSelect(p.id); }}>
+      <title>{p.Serial} / {p.shot} · {fmt(p.milliseconds)} s · {p.date || "无日期"}</title>
+    </circle>;
+  };
+  return <div className="pulse-cloud-layout">
+    <div className="pulse-cloud-metrics" aria-label="脉宽概况">
+      <div><span>最短脉宽</span><strong>{fmt(minimum)} <small>s</small></strong></div>
+      <div><span>中位脉宽</span><strong>{fmt(median)} <small>s</small></strong></div>
+      <div><span>最长脉宽</span><strong>{fmt(maximum)} <small>s</small></strong></div>
+    </div>
+    <div className="pulse-scroll">
+      <svg viewBox="0 0 1000 335" className="pulse-svg pulse-cloud" role="img"
+        aria-label="脉宽分布气泡云图，线性秒数横轴，密度云轮廓与可点击的炮次气泡，脉宽越长气泡越大">
+        <defs>
+          <linearGradient id="pulse-surface" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#f7fbff" /><stop offset="100%" stopColor="#f7f7fd" />
+          </linearGradient>
+          <linearGradient id="pulse-haze" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#71c9c2" stopOpacity=".14"/>
+            <stop offset="48%" stopColor="#8db8e8" stopOpacity=".24"/>
+            <stop offset="100%" stopColor="#a49ce1" stopOpacity=".17"/>
+          </linearGradient>
+        </defs>
+        <rect x="9" y="10" width="982" height="315" rx="16" fill="url(#pulse-surface)"/>
+        {ticks.map(t => <g key={t}>
+          <line x1={px(t * 1000)} x2={px(t * 1000)} y1="26" y2="268"
+            stroke="#dfe8f4" strokeWidth="1" strokeDasharray={t ? "4 7" : "none"}/>
+          <text x={px(t * 1000)} y="299" fontSize="12" textAnchor="middle"
+            fill="#7586a0">{Math.round(t).toLocaleString("zh-CN")}</text>
+        </g>)}
+        <line x1="60" x2="940" y1={centerY} y2={centerY} stroke="#a9b7d4" strokeOpacity=".32" strokeDasharray="3 8"/>
+        <polygon points={polygon} fill="url(#pulse-haze)" stroke="#8cafdc" strokeOpacity=".23" strokeWidth=".85"/>
+        {sorted.filter(p => !featured(p.id)).map(bubble)}
+        {sorted.filter(p => featured(p.id)).map(bubble)}
+        <text x="500" y="321" textAnchor="middle" fill="#7183a0" fontSize="12">
+          脉宽 (s)
+        </text>
+      </svg>
+    </div>
+  </div>;
 }
 
 export default function DashboardV11() {
@@ -79,7 +132,7 @@ export default function DashboardV11() {
   const max = Math.max(1, ...info.by_serial.map(p => p.count));
   return <div className="v11-dashboard">
     <div className="v11-heading">
-      <div><h1>实验工作台</h1><p>回旋管运行参数 · 历史数据分析</p></div>
+      <h1>实验工作台</h1>
       <div className="v11-filters">
         <select aria-label="工作台回旋管筛选" value={serial} onChange={e => setSerial(e.target.value)}>
           <option value="">全部 Serial</option>
@@ -95,20 +148,23 @@ export default function DashboardV11() {
       <div className="v11-card"><small>最近实验日期</small><strong>{info.latest_date || "暂无记录"}</strong></div>
     </section>
     <section className="v11-panel">
-      <div className="v11-panel-heading"><div><h2>脉宽分布</h2><p>每炮一个气泡；脉宽越长，气泡越大。纵向位置不代表物理参数。</p></div>
-        <span>共 {info.points.length} 个可绘制点</span></div>
+      <div className="v11-panel-heading"><h2>脉宽分布</h2></div>
       <PulseChart points={info.points} onSelect={setDetailId} />
-      <div className="v11-muted">{info.missing_iplen} 炮因脉宽为空或 ≤ 0 未绘制。
-        {info.missing_iplen > 0 && <Link to={"/records?iplen_state=missing" + (serial ? "&serial=" + encodeURIComponent(serial) : "")}>查看未绘制炮次</Link>}</div>
+      {info.missing_iplen > 0 && <div className="v11-muted">
+        <Link to={"/records?iplen_state=missing" + (serial ? "&serial=" + encodeURIComponent(serial) : "")}>
+          {info.missing_iplen} 炮无有效脉宽
+        </Link>
+      </div>}
     </section>
     <div className="v11-chart-grid">
-      <section className="v11-panel"><div className="v11-panel-heading"><h2>回旋管炮次数量分布</h2><span>全部历史，降序</span></div>
+      <section className="v11-panel"><div className="v11-panel-heading"><h2>回旋管炮次数量分布</h2></div>
         <div className="v11-bars" role="group" aria-label="按 Serial 切换工作台">
           {info.by_serial.map(row => <button key={row.name} title={"选中 " + row.name} onClick={() => setSerial(row.name)}
             className={"v11-bar-item " + (row.name === serial ? "active" : "")}>
             <span className="v11-bar-count">{row.count}</span>
             <span className="v11-bar-column" style={{ height: Math.max(4, row.count / max * 155) }} />
-            <span className="v11-bar-label">{row.name}</span>
+            <span className="v11-bar-label">{row.name.startsWith("TEST-SYNTH-GYRO-")
+              ? row.name.slice(-2) : row.name.length > 9 ? row.name.slice(0, 8) + "…" : row.name}</span>
           </button>)}
           {!info.by_serial.length && <p>暂无炮次记录</p>}
         </div>

@@ -115,7 +115,11 @@ def main():
             page.goto(BASE + "/app/")
             expect(page.get_by_role("heading", name="实验工作台")).to_be_visible()
             expect(page.get_by_role("img", name="脉宽分布气泡云图")).to_be_visible()
-            expect(page.get_by_text("iplen (s) · 线性坐标 · 圆点大小代表脉宽")).to_be_visible()
+            expect(page.get_by_text("脉宽 (s)")).to_be_visible()
+            # Keep the dashboard visually concise.
+            assert page.get_by_text("PULSE DISTRIBUTION").count() == 0
+            assert page.get_by_text("点击气泡查看炮次详情").count() == 0
+            assert page.get_by_text("回旋管运行参数 · 历史数据分析").count() == 0
             assert page.get_by_text("对数坐标").count() == 0
             longer = page.get_by_role(
                 "button", name=SERIAL + " 第" + SHOT + "炮，脉宽 900000.0000000000ms"
@@ -129,7 +133,7 @@ def main():
             cx = page.get_by_role(
                 "button", name="V11-CHROMIUM-TEST-01 第" + SHOT + "炮，脉宽 900000.0000000000ms"
             ).get_attribute("cx")
-            assert float(cx) == 938
+            assert float(cx) == 940
             page.get_by_role(
                 "button", name="V11-CHROMIUM-TEST-01 第" + SHOT + "炮，脉宽 900000.0000000000ms"
             ).click()
