@@ -1,0 +1,11 @@
+.env
+*.sqlite3
+*.dump
+backups/
+artifacts/
+tests/
+__pycache__/
+.pytest_cache/
+.git/
+frontend/node_modules/
+gyrotron/static/app/

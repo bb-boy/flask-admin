@@ -1,0 +1,28 @@
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://gyrotron:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/gyrotron
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+    ports:
+      - "${GYROTRON_BIND_ADDRESS:-127.0.0.1}:${GYROTRON_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gyrotron
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      POSTGRES_DB: gyrotron
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gyrotron -d gyrotron"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  postgres_data:

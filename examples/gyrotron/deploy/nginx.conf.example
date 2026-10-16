@@ -1,0 +1,15 @@
+# Replace 127.0.0.1 with the exact institute LAN subnet before remote use.
+# Keep "deny all" last. Validate with "nginx -t" before reloading.
+server {
+    listen 80;
+    server_name gyrotron.internal;
+    location / {
+        allow 127.0.0.1;
+        deny all;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
