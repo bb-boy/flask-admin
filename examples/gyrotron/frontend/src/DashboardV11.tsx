@@ -14,31 +14,37 @@ function PulseChart({ points, onSelect }: {
   if (!points.length) return <div className="empty-small">该范围没有可绘制的正脉宽数据</div>;
   const values = points.map(p => Number(p.iplen)).filter(v => Number.isFinite(v) && v > 0);
   if (!values.length) return <div className="empty-small">暂无有效脉宽数据</div>;
-  const maximum = Math.max(1, ...values);
-  const x = (value: number) => 48 + (value / maximum) * 890;
-  const ticks = Array.from({ length: 6 }, (_, i) => (maximum * i) / 5);
-  const formatTick = (value: number) => new Intl.NumberFormat("zh-CN", {
-    notation: "compact", maximumFractionDigits: 1,
-  }).format(value);
-  const positionY = (id: number) => 145 + (((id * 2654435761) >>> 0) % 1000 / 1000 - .5) * 170;
-  return <div className="pulse-scroll"><svg viewBox="0 0 1000 295" className="pulse-svg" role="img"
-    aria-label="脉宽分布蜂群散点图，横轴为脉宽毫秒的线性坐标，纵向抖动没有物理意义">
+  // Input is stored in milliseconds, while scientists read the x-axis in seconds.
+  const maximumMilliseconds = Math.max(...values);
+  const maximumSeconds = maximumMilliseconds / 1000;
+  const axisMaximumSeconds = Math.max(300, Math.ceil(maximumSeconds / 300) * 300);
+  const x = (milliseconds: number) => 48 + (milliseconds / 1000 / axisMaximumSeconds) * 890;
+  const ticks = Array.from({ length: 6 }, (_, i) => (axisMaximumSeconds * i) / 5);
+  // Every point belongs to a stable vertical band; the vertical position carries no physical meaning.
+  const positionY = (id: number) => 145 + (((id * 2654435761) >>> 0) % 1000 / 1000 - .5) * 204;
+  const radius = (milliseconds: number) => 2.5 + 10 * Math.sqrt(milliseconds / maximumMilliseconds);
+  const cloudColor = (seconds: number) =>
+    seconds >= 1000 ? "#d4935c" : seconds >= 500 ? "#7382bd" : "#68a9be";
+  return <div className="pulse-scroll"><svg viewBox="0 0 1000 295" className="pulse-svg pulse-cloud" role="img"
+    aria-label="脉宽分布气泡云图，横轴为脉宽秒数的线性坐标，脉宽越长气泡越大，纵向抖动没有物理意义">
     {ticks.map(t => <g key={t}>
-      <line x1={x(t)} x2={x(t)} y1="19" y2="260" stroke="#e9eef5" strokeDasharray="3 5" />
-      <text x={x(t)} y="284" fontSize="11" textAnchor="middle" fill="#8190a5">{formatTick(t)}</text>
+      <line x1={x(t * 1000)} x2={x(t * 1000)} y1="19" y2="260" stroke="#e9eef5" strokeDasharray="3 5" />
+      <text x={x(t * 1000)} y="284" fontSize="11" textAnchor="middle" fill="#8190a5">{Math.round(t).toLocaleString("zh-CN")}</text>
     </g>)}
     <line x1="48" y1="260" x2="938" y2="260" stroke="#b5c2d6" />
-    {points.map(p => {
+    {[...points].sort((a, b) => Number(b.iplen) - Number(a.iplen)).map(p => {
       const value = Number(p.iplen);
-      return <circle key={p.id} className="pulse-dot" cx={x(value)} cy={positionY(p.id)} r={3.7}
-        fill={value >= 700000 ? "#ee923b" : "#547bd9"} fillOpacity=".8" tabIndex={0}
+      const seconds = value / 1000;
+      return <circle key={p.id} className="pulse-dot" cx={x(value)} cy={positionY(p.id)}
+        r={radius(value)} fill={cloudColor(seconds)} fillOpacity=".48"
+        stroke={cloudColor(seconds)} strokeWidth=".6" strokeOpacity=".25" tabIndex={0}
         role="button" aria-label={p.Serial + " 第" + p.shot + "炮，脉宽 " + p.iplen + "ms"}
         onClick={() => onSelect(p.id)}
         onKeyDown={event => { if (event.key === "Enter") onSelect(p.id); }}>
-        <title>{p.Serial} / {p.shot} · {p.iplen} ms · {p.date || "无日期"}</title>
+        <title>{p.Serial} / {p.shot} · {seconds.toFixed(2)} s · {p.date || "无日期"}</title>
       </circle>;
     })}
-    <text x="498" y="294" textAnchor="middle" fill="#7184a0" fontSize="10">iplen (ms) · 线性坐标</text>
+    <text x="498" y="294" textAnchor="middle" fill="#7184a0" fontSize="10">iplen (s) · 线性坐标 · 圆点大小代表脉宽</text>
   </svg></div>;
 }
 
@@ -89,7 +95,7 @@ export default function DashboardV11() {
       <div className="v11-card"><small>最近实验日期</small><strong>{info.latest_date || "暂无记录"}</strong></div>
     </section>
     <section className="v11-panel">
-      <div className="v11-panel-heading"><div><h2>脉宽分布</h2><p>每炮一个点；纵向抖动不代表物理参数</p></div>
+      <div className="v11-panel-heading"><div><h2>脉宽分布</h2><p>每炮一个气泡；脉宽越长，气泡越大。纵向位置不代表物理参数。</p></div>
         <span>共 {info.points.length} 个可绘制点</span></div>
       <PulseChart points={info.points} onSelect={setDetailId} />
       <div className="v11-muted">{info.missing_iplen} 炮因脉宽为空或 ≤ 0 未绘制。

@@ -96,11 +96,32 @@ def main():
                 page.get_by_role("link", name="导出 CSV ZIP").click()
             assert download_info.value.suggested_filename.endswith(".zip")
 
+            # Create a second pulse via the API for a reliable size comparison.
+            response = page.request.post(
+                BASE + "/api/v1/shots",
+                data={
+                    "Serial": SERIAL,
+                    "shot": str(int(SHOT) + 1),
+                    "date": "2026-10-15",
+                    "iplen": "1000",
+                    "custom_parameters": [],
+                },
+            )
+            assert response.status == 201, response.text()
+
             page.goto(BASE + "/app/")
             expect(page.get_by_role("heading", name="实验工作台")).to_be_visible()
-            expect(page.get_by_role("img", name="脉宽分布蜂群散点图")).to_be_visible()
-            expect(page.get_by_text("iplen (ms) · 线性坐标")).to_be_visible()
+            expect(page.get_by_role("img", name="脉宽分布气泡云图")).to_be_visible()
+            expect(page.get_by_text("iplen (s) · 线性坐标 · 圆点大小代表脉宽")).to_be_visible()
             assert page.get_by_text("对数坐标").count() == 0
+            longer = page.get_by_role(
+                "button", name=SERIAL + " 第" + SHOT + "炮，脉宽 900000.0000000000ms"
+            )
+            shorter = page.get_by_role(
+                "button", name=SERIAL + " 第" + str(int(SHOT) + 1) + "炮，脉宽 1000.0000000000ms"
+            )
+            assert float(longer.get_attribute("r")) > float(shorter.get_attribute("r"))
+            assert float(longer.get_attribute("cx")) > float(shorter.get_attribute("cx"))
             # A positive pulse with only one point sits at the upper bound of a 0..max linear scale.
             cx = page.get_by_role(
                 "button", name="V11-CHROMIUM-TEST-01 第" + SHOT + "炮，脉宽 900000.0000000000ms"

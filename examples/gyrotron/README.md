@@ -93,3 +93,9 @@ Dockerfile 使用 Node 构建阶段生成静态前端，最终仅保留 Python/F
 本地验收命令：在 examples/gyrotron 下运行 `python -m pytest -q tests`；在 frontend 下运行 `npm ci && npm run build`；使用独立 SQLite 测试数据库启动 Flask 后运行 `python browser_e2e.py` 和 `python browser_react_e2e.py`。
 
 **不涉及部署**：本次不迁移生产数据库、不更改 inA 或 Log 主机环境。既有数据库的实际 DDL 不会通过 SQLAlchemy create_all 自动迁移。当前记录表已支持方向键单元格定位、单格复制、Enter 编辑、服务器全量排序、九项固定参数区间筛选，以及数值/日期/文本自定义参数的多条件 AND 查询；尚不包含 Excel 式跨格矩形选区、批量粘贴和拖拽填充。
+
+### 气泡云图与模拟脉宽范围
+
+脉宽字段 iplen 在数据库中以 **ms** 存储，工作台气泡云图的横轴以 **s** 显示（线性坐标）。每炮一个半透明气泡，脉宽越长半径越大，纵向抖动仅用于避免气泡完全重叠。
+
+仅对 TEST-SYNTH-GYRO- 前缀且备注含“【模拟测试数据】”的演示炮次，可使用 scripts/refresh_synthetic_iplen.py 将脉宽重新生成到 **1–1500 s（1000–1500000 ms）**。脚本默认只预览，传入 --apply 才写入；始终需要先备份数据库。其他字段、自定义参数、非合成炮次不会更改。

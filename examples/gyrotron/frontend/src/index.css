@@ -256,8 +256,8 @@ a { text-decoration: none; }
 .v11-muted a { color:#436bb7; margin-left:8px; text-decoration:underline; }
 .pulse-scroll { width:100%; overflow-x:auto; }
 .pulse-svg { display:block; width:100%; min-width:690px; max-height:360px; }
-.pulse-dot { cursor:pointer; transition:r .12s; }
-.pulse-dot:hover,.pulse-dot:focus { r:6; stroke:#192d49; stroke-width:1px; outline:none; }
+.pulse-dot { cursor:pointer; transition:fill-opacity .15s, stroke-width .15s; }
+.pulse-dot:hover,.pulse-dot:focus { fill-opacity:.88; stroke:#233e63; stroke-width:1.6px; outline:none; }
 .v11-chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px; }
 .v11-bars { display:flex; gap:10px; align-items:flex-end; overflow-x:auto; min-height:220px; padding:14px 0 0; }
 .v11-bar-item { min-width:60px; display:flex; flex:1 0 60px; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px; padding:7px; background:transparent; color:#6580ad; border-radius:8px; }

@@ -353,3 +353,20 @@ def test_server_side_sort_applies_before_paging():
     assert [row["shot"] for row in descending.json["items"]] == ["3", "2"]
     assert c.get("/api/v1/shots?sort=unknown").status_code == 400
     assert c.get("/api/v1/shots?order=sideways").status_code == 400
+
+
+def test_synthetic_pulse_generator_is_deterministic_and_within_seconds_bounds():
+    from scripts.refresh_synthetic_iplen import (
+        HIGH_MS,
+        LOW_MS,
+        synthetic_pulse_ms,
+    )
+
+    samples = [
+        synthetic_pulse_ms(f"TEST-SYNTH-GYRO-{index:02d}", shot)
+        for index in range(1, 13)
+        for shot in (1, 2, 3, 57, 120, 200)
+    ]
+    assert all(LOW_MS <= width <= HIGH_MS for width in samples)
+    assert len(set(samples)) > 50
+    assert synthetic_pulse_ms("TEST-SYNTH-GYRO-01", 1) == samples[0]
