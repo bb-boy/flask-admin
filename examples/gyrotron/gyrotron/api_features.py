@@ -24,7 +24,7 @@ from .models import CustomParameter, Shot
 from .validation import RecordValidationError
 
 
-def filters_from_args(args: Any):
+def filters_from_args(args: Any) -> Any:
     """Use one filtering contract for listing, exports and batch operations."""
     stmt = select(Shot)
     if args.get("ids") is not None:
@@ -47,16 +47,16 @@ def filters_from_args(args: Any):
         from .api import parse_bigint
 
         stmt = stmt.where(Shot.shot == parse_bigint(shot_number, "炮号"))
-    for name, op in (("date_from", ">="), ("date_to", "<=")):
-        value = args.get(name)
+    for date_filter, op in (("date_from", ">="), ("date_to", "<=")):
+        value = args.get(date_filter)
         if value:
             try:
-                parsed = date.fromisoformat(value)
-                if parsed.isoformat() != value:
+                parsed_day = date.fromisoformat(value)
+                if parsed_day.isoformat() != value:
                     raise ValueError()
             except (TypeError, ValueError) as exc:
                 raise RecordValidationError("日期筛选格式必须是 YYYY-MM-DD") from exc
-            stmt = stmt.where(Shot.date >= parsed if op == ">=" else Shot.date <= parsed)
+            stmt = stmt.where(Shot.date >= parsed_day if op == ">=" else Shot.date <= parsed_day)
     missing = args.get("iplen_state", "")
     if missing == "missing":
         stmt = stmt.where((Shot.iplen.is_(None)) | (Shot.iplen <= 0))
@@ -69,9 +69,11 @@ def filters_from_args(args: Any):
     for field in FIXED_NAMES:
         for suffix, op in (("_min", ">="), ("_max", "<=")):
             if (value := args.get(field + suffix)) not in (None, ""):
-                parsed = parse_decimal(value, field + suffix)
+                numeric_value = parse_decimal(value, field + suffix)
                 column = getattr(Shot, field)
-                stmt = stmt.where(column >= parsed if op == ">=" else column <= parsed)
+                stmt = stmt.where(
+                    column >= numeric_value if op == ">=" else column <= numeric_value
+                )
     raw_filters = args.get("custom_filters")
     if raw_filters:
         try:
@@ -238,7 +240,7 @@ def csv_bytes(headers: list[str], records: list[list[Any]]) -> bytes:
     return output.getvalue().encode("utf-8-sig")
 
 
-def export_rows(filters: dict[str, Any]):
+def export_rows(filters: dict[str, Any]) -> Any:
     records = (
         session()
         .scalars(

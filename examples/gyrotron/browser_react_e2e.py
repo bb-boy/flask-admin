@@ -1,4 +1,5 @@
 """Chromium regression for V1.1, running only against a local test database."""
+
 from __future__ import annotations
 
 import os
@@ -16,8 +17,9 @@ def main():
     out.mkdir(exist_ok=True)
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context(viewport={"width": 1440, "height": 900},
-                                      locale="zh-CN", accept_downloads=True)
+        context = browser.new_context(
+            viewport={"width": 1440, "height": 900}, locale="zh-CN", accept_downloads=True
+        )
         page = context.new_page()
         try:
             page.goto(BASE + "/app/")
@@ -71,7 +73,9 @@ def main():
             page.goto(BASE + "/app/")
             expect(page.get_by_role("heading", name="实验工作台")).to_be_visible()
             expect(page.get_by_role("img", name="脉宽分布蜂群散点图")).to_be_visible()
-            page.get_by_role("button", name="V11-CHROMIUM-TEST-01 第" + SHOT + "炮，脉宽 900000.0000000000ms").click()
+            page.get_by_role(
+                "button", name="V11-CHROMIUM-TEST-01 第" + SHOT + "炮，脉宽 900000.0000000000ms"
+            ).click()
             expect(page.get_by_role("complementary", name="炮次详情")).to_be_visible()
             page.get_by_role("button", name="关闭").click()
 

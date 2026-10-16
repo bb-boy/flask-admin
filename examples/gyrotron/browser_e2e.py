@@ -1,4 +1,5 @@
 """Chromium smoke test for the retained legacy Flask-Admin form."""
+
 from __future__ import annotations
 
 import json
