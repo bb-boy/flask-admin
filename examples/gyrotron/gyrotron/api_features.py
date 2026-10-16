@@ -101,22 +101,34 @@ def filters_from_args(args: Any) -> Any:
             elif operator == "eq":
                 criterion.append(CustomParameter.value == value)
             else:
-                from .api import parse_decimal
+                comparator: Any
+                if item.get("data_type") == "DATE":
+                    try:
+                        day = date.fromisoformat(value)
+                        if day.isoformat() != value:
+                            raise ValueError()
+                    except ValueError as exc:
+                        raise RecordValidationError("自定义日期筛选必须为 YYYY-MM-DD") from exc
+                    criterion.append(CustomParameter.data_type == "DATE")
+                    comparison_value: Any = value  # ISO dates compare lexicographically.
+                    comparator = CustomParameter.value
+                else:
+                    from sqlalchemy import Numeric, cast
 
-                number = parse_decimal(value, "筛选数值")
-                if number is None:
-                    raise RecordValidationError("数值筛选不能留空")
-                # Narrow to validated DECIMAL/BIGINT rows before casting, not free text.
-                from sqlalchemy import Numeric, cast
+                    from .api import parse_decimal
 
-                criterion.append(CustomParameter.data_type.in_(("DECIMAL", "BIGINT")))
-                comparator = cast(CustomParameter.value, Numeric(28, 10))
+                    number = parse_decimal(value, "筛选数值")
+                    if number is None:
+                        raise RecordValidationError("数值筛选不能留空")
+                    criterion.append(CustomParameter.data_type.in_(("DECIMAL", "BIGINT")))
+                    comparison_value = number
+                    comparator = cast(CustomParameter.value, Numeric(28, 10))
                 criterion.append(
                     {
-                        "gt": comparator > number,
-                        "gte": comparator >= number,
-                        "lt": comparator < number,
-                        "lte": comparator <= number,
+                        "gt": comparator > comparison_value,
+                        "gte": comparator >= comparison_value,
+                        "lt": comparator < comparison_value,
+                        "lte": comparator <= comparison_value,
                     }[operator]
                 )
             stmt = stmt.where(Shot.custom_parameters.any(and_(*criterion)))

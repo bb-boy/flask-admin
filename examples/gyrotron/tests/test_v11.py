@@ -259,3 +259,97 @@ def test_type_exact_numeric_keeps_zero_separate_from_null():
     other = c.post("/api/v1/shots", json=make_shot(number="2", iplen=None))
     assert other.status_code == 201
     assert other.json["iplen"] is None
+
+
+def test_custom_date_ranges_combined_with_numeric_and():
+    _, c = client()
+    first = make_shot(serial="TUBE-DATE", number="1")
+    first["custom_parameters"].extend(
+        [
+            {
+                "name": "observed",
+                "description": "观察日期",
+                "data_type": "DATE",
+                "unit": None,
+                "value": "2026-10-14",
+            },
+        ]
+    )
+    first["custom_parameters"][0]["value"] = "2.5"
+    second = make_shot(serial="TUBE-DATE", number="2")
+    second["custom_parameters"].extend(
+        [
+            {
+                "name": "observed",
+                "description": "观察日期",
+                "data_type": "DATE",
+                "unit": None,
+                "value": "2026-10-16",
+            },
+        ]
+    )
+    second["custom_parameters"][0]["value"] = "9.0"
+    assert c.post("/api/v1/shots", json=first).status_code == 201
+    assert c.post("/api/v1/shots", json=second).status_code == 201
+    conditions = [
+        {"name": "observed", "data_type": "DATE", "operator": "gt", "value": "2026-10-15"},
+        {"name": "extra", "data_type": "DECIMAL", "operator": "gte", "value": "8"},
+    ]
+    response = c.get(
+        "/api/v1/shots",
+        query_string={
+            "serial": "TUBE-DATE",
+            "custom_filters": json.dumps(conditions),
+        },
+    )
+    assert response.status_code == 200, response.json
+    assert [row["shot"] for row in response.json["items"]] == ["2"]
+    conditions[0]["value"] = "2026-10-17"
+    assert (
+        c.get(
+            "/api/v1/shots",
+            query_string={
+                "serial": "TUBE-DATE",
+                "custom_filters": json.dumps(conditions),
+            },
+        ).json["total"]
+        == 0
+    )
+    conditions[0]["value"] = "incorrect-date"
+    assert (
+        c.get(
+            "/api/v1/shots",
+            query_string={
+                "custom_filters": json.dumps(conditions),
+            },
+        ).status_code
+        == 400
+    )
+
+
+def test_server_side_sort_applies_before_paging():
+    _, c = client()
+    seed(c)
+    ascending = c.get(
+        "/api/v1/shots",
+        query_string={
+            "serial": "TUBE-A",
+            "sort": "shot",
+            "order": "asc",
+            "page_size": "2",
+        },
+    )
+    assert ascending.status_code == 200, ascending.json
+    assert [row["shot"] for row in ascending.json["items"]] == ["1", "2"]
+    descending = c.get(
+        "/api/v1/shots",
+        query_string={
+            "serial": "TUBE-A",
+            "sort": "date",
+            "order": "desc",
+            "page_size": "2",
+        },
+    )
+    assert [row["shot"] for row in descending.json["items"]] == ["3", "2"]
+    assert c.get("/api/v1/shots?sort=unknown").status_code == 400
+    assert c.get("/api/v1/shots?order=sideways").status_code == 400

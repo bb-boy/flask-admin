@@ -231,7 +231,16 @@ def list_shots():
         db = session()
         total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
         serial = request.args.get("serial", "")
-        sorting = (Shot.shot.desc(), Shot.id.desc()) if serial else (Shot.id.desc(),)
+        sort_key = request.args.get("sort", "shot" if serial else "id")
+        order = request.args.get("order", "desc")
+        if sort_key not in ("id", "shot", "date", *NUMERIC_FIELDS) or order not in ("asc", "desc"):
+            raise RecordValidationError("排序字段或方向无效")
+        sort_column = getattr(Shot, sort_key)
+        sorting = (
+            (sort_column.asc(), Shot.id.asc())
+            if order == "asc"
+            else (sort_column.desc(), Shot.id.desc())
+        )
         rows = db.scalars(stmt.order_by(*sorting).offset((page - 1) * size).limit(size)).all()
         return jsonify(
             {

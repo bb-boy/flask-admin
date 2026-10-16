@@ -320,3 +320,21 @@ a { text-decoration: none; }
  .v11-heading { flex-direction:column; align-items:stretch; }
  .v11-edit-fields { grid-template-columns:1fr; }
 }
+
+
+/* V1.1 advanced filtering and Excel-style keyboard active cell. */
+.v11-range-filters, .v11-custom-filters { flex-basis:100%; width:100%; border-top:1px solid #e5ebf2; padding:10px 0 4px; }
+.v11-range-filters summary { cursor:pointer; color:#4e6b98; font-size:12px; font-weight:700; margin-bottom:12px; }
+.v11-range-filters>div { display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:10px; }
+.v11-range-item { display:grid; grid-template-columns:minmax(80px,1fr) 80px 80px; align-items:center; gap:7px; color:#60738a; font-size:11px; }
+.v11-range-item input { width:100%; min-width:0; }
+.v11-custom-heading { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; color:#506984; font-size:12px; }
+.v11-filter-line { display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin-bottom:9px; }
+.v11-filter-line input { flex:1 1 130px; max-width:none; }
+.v11-filter-line select { flex:0 0 auto; }
+.v11-table-viewport:focus { outline:2px solid #b1c8ec; outline-offset:2px; }
+.v11-table tbody td.v11-active-cell { background:#e7f0ff!important; outline:2px solid #6185d0; outline-offset:-2px; cursor:cell; }
+.v11-table tbody td:not(:has(button)):hover { cursor:cell; }
+.v11-confirm-leave { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:14px; padding:12px; border:1px solid #c6d7f1; border-radius:8px; background:#f0f5fc; }
+.v11-confirm-leave span { flex:1 1 180px; font-size:12px; color:#546b87; }
+.v11-confirm-leave button { padding:7px 10px; min-height:34px; font-size:12px; }

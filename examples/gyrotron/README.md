@@ -92,4 +92,4 @@ Dockerfile 使用 Node 构建阶段生成静态前端，最终仅保留 Python/F
 
 本地验收命令：在 examples/gyrotron 下运行 `python -m pytest -q tests`；在 frontend 下运行 `npm ci && npm run build`；使用独立 SQLite 测试数据库启动 Flask 后运行 `python browser_e2e.py` 和 `python browser_react_e2e.py`。
 
-**不涉及部署**：本次不迁移生产数据库、不更改 inA 或 Log 主机环境。既有数据库的实际 DDL 不会通过 SQLAlchemy create_all 自动迁移。当前表格实现虚拟行展示及分页式后台增量加载，但尚未实现完整 Excel 式键盘选区和全部高级筛选 UI。
+**不涉及部署**：本次不迁移生产数据库、不更改 inA 或 Log 主机环境。既有数据库的实际 DDL 不会通过 SQLAlchemy create_all 自动迁移。当前记录表已支持方向键单元格定位、单格复制、Enter 编辑、服务器全量排序、九项固定参数区间筛选，以及数值/日期/文本自定义参数的多条件 AND 查询；尚不包含 Excel 式跨格矩形选区、批量粘贴和拖拽填充。
