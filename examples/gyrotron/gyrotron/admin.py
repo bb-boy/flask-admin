@@ -24,7 +24,7 @@ class ShotAdmin(ModelView):
         "iplen": "脉宽 (ms)",
         "Uc": "阴极电压 (kV)",
         "Ua": "阳极电压 (kV)",
-        "Ib": "阴极电流 (A)",
+        "Ib": "回旋管电流 (A)",
         "Im": "磁场电流 (A)",
         "Pf": "灯丝功率 (W)",
         "Ic": "阴极线圈电流 (A)",
@@ -75,7 +75,14 @@ class ShotAdmin(ModelView):
     )
 
     def on_model_change(self, form, model, is_created):
+        from sqlalchemy import inspect
+
         try:
+            if not is_created and (
+                inspect(model).attrs.Serial.history.has_changes()
+                or inspect(model).attrs.shot.history.has_changes()
+            ):
+                raise RecordValidationError("已保存炮次的 Serial 和 shot 不允许修改")
             validate_shot(model)
         except RecordValidationError as exc:
             raise ValidationError(str(exc)) from exc

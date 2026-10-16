@@ -40,8 +40,6 @@ def validate_parameter(parameter: CustomParameter) -> None:
         raise RecordValidationError("自定义参数名称不能为空")
     if name.casefold() in {field.casefold() for field in BASE_FIELDS}:
         raise RecordValidationError(f"自定义参数 {name} 与系统固定字段重名")
-    if not (parameter.description or "").strip():
-        raise RecordValidationError(f"参数 {name} 必须填写中文含义")
     if parameter.data_type not in SUPPORTED_TYPES:
         raise RecordValidationError(f"参数 {name} 的类型不支持: {parameter.data_type}")
     value = parameter.value
@@ -75,6 +73,8 @@ def validate_shot(shot: Shot) -> None:
         raise RecordValidationError("Serial 不能为空")
     if shot.shot is None or not BIGINT_MIN <= shot.shot <= BIGINT_MAX:
         raise RecordValidationError("shot 必须为有效 BIGINT")
+    if shot.date is None:
+        raise RecordValidationError("实验日期不能为空")
     seen: set[str] = set()
     for parameter in shot.custom_parameters:
         validate_parameter(parameter)

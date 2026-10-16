@@ -37,6 +37,9 @@ export interface DashboardData {
   latest_date: string | null;
   recent: Shot[];
   by_serial: { name: string; count: number }[];
+  points: { id: number; Serial: string; shot: string; date: string | null; iplen: string }[];
+  missing_iplen: number;
+  daily: { date: string; count: number }[];
 }
 
 export interface ShotPage {
@@ -50,7 +53,7 @@ export const FIXED_FIELDS: { key: FixedKey; label: string; unit: string; group: 
   { key: "iplen", label: "脉冲宽度", unit: "ms", group: "脉冲与电压" },
   { key: "Uc", label: "阴极电压", unit: "kV", group: "脉冲与电压" },
   { key: "Ua", label: "阳极电压", unit: "kV", group: "脉冲与电压" },
-  { key: "Ib", label: "阴极电流", unit: "A", group: "电流与磁场" },
+  { key: "Ib", label: "回旋管电流", unit: "A", group: "电流与磁场" },
   { key: "Im", label: "磁场电流", unit: "A", group: "电流与磁场" },
   { key: "Ic", label: "阴极线圈电流", unit: "A", group: "电流与磁场" },
   { key: "Pf", label: "灯丝功率", unit: "W", group: "功率监测" },

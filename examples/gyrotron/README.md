@@ -78,3 +78,18 @@ npm run build  # 构建到 ../gyrotron/static/app
 ### 容器部署
 
 Dockerfile 使用 Node 构建阶段生成静态前端，最终仅保留 Python/Flask 运行时。应用无需新增前端端口，数据仍存放于既有 PostgreSQL Volume。新版部署前应先确认 GitHub Actions 的 React 构建、Chromium UI、PostgreSQL 集成与旧业务测试全部通过。
+
+
+## V1.1 需求实现与本地验收（不涉及部署）
+
+根据 V1.1 设计需求，本次实现的开发范围：
+
+- 顶栏导航；工作台三项指标、对数脉宽散点图（大于等于 700000 ms 为橙色）、全部 Serial 数量柱状图、实验时间趋势图和点击散点打开详情。
+- 单 Serial 炮次记录、按需加载、shot 倒序、固定列及自定义列选择、行内编辑与完整编辑、服务器筛选、Excel 双工作表及 CSV 双文件 ZIP 导出。
+- 新炮次建议炮号、连续保存并录入下一炮、不继承上一炮测量值或自定义参数，以及新建表单本地草稿恢复。
+- 后端强制九项固定 DECIMAL 参数及单位、shot BIGINT、date DATE 必填、remark TEXT；保存后 Serial/shot 不允许更改。自定义参数的五字段中，参数含义对应原有 description 字段，参数含义、单位及参数值允许为空。
+- 批量删除先预览目标数量及目标集合摘要，确认后核对目标集合，再事务删除关联炮次和自定义参数。
+
+本地验收命令：在 examples/gyrotron 下运行 `python -m pytest -q tests`；在 frontend 下运行 `npm ci && npm run build`；使用独立 SQLite 测试数据库启动 Flask 后运行 `python browser_e2e.py` 和 `python browser_react_e2e.py`。
+
+**不涉及部署**：本次不迁移生产数据库、不更改 inA 或 Log 主机环境。既有数据库的实际 DDL 不会通过 SQLAlchemy create_all 自动迁移。当前表格实现虚拟行展示及分页式后台增量加载，但尚未实现完整 Excel 式键盘选区和全部高级筛选 UI。

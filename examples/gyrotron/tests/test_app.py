@@ -28,6 +28,7 @@ def test_create_shot_with_inline_parameter_via_web_form():
         data={
             "Serial": "GYRO-WEB-001",
             "shot": "1001",
+            "date": "2026-10-15",
             "iplen": "1.5",
             "custom_parameters-0-name": "It",
             "custom_parameters-0-description": "钛泵电流",

@@ -38,7 +38,7 @@ class Shot(Base):
     Pw: Mapped[Decimal | None] = mapped_column(Numeric(28, 10), nullable=True)
     Pc: Mapped[Decimal | None] = mapped_column(Numeric(28, 10), nullable=True)
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
-    date: Mapped[DateValue | None] = mapped_column(Date, nullable=True)
+    date: Mapped[DateValue] = mapped_column(Date, nullable=False)
     custom_parameters: Mapped[list[CustomParameter]] = relationship(
         "CustomParameter",
         back_populates="parent",
@@ -60,7 +60,7 @@ class CustomParameter(Base):
         index=True,
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
     unit: Mapped[str | None] = mapped_column(String(60), nullable=True)
     data_type: Mapped[str] = mapped_column(String(24), nullable=False, default="DECIMAL")
     value: Mapped[str | None] = mapped_column(Text, nullable=True)

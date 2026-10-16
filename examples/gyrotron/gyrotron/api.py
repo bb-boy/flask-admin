@@ -141,6 +141,8 @@ def validated_form(data: Any) -> dict[str, Any]:
         "date": parse_date(data.get("date")),
         "remark": optional_string(data.get("remark"), "备注"),
     }
+    if parsed["date"] is None:
+        raise RecordValidationError("实验日期不能为空")
     for field in NUMERIC_FIELDS:
         parsed[field] = parse_decimal(data.get(field), field)
     params = data.get("custom_parameters", [])
@@ -166,7 +168,7 @@ def validated_form(data: Any) -> dict[str, Any]:
             {
                 "id": raw_id,
                 "name": nonempty_string(row.get("name"), "参数名称", 120),
-                "description": nonempty_string(row.get("description"), "参数含义", 255),
+                "description": optional_string(row.get("description"), "参数含义", 255),
                 "unit": optional_string(row.get("unit"), "单位", 60),
                 "data_type": nonempty_string(row.get("data_type"), "数据类型", 24),
                 "value": optional_string(row.get("value"), "参数值"),
@@ -211,57 +213,36 @@ def apply_payload(shot: Shot, data: dict[str, Any]) -> None:
 
 @api.get("/dashboard")
 def dashboard():
-    db = session()
-    total = db.query(func.count(Shot.id)).scalar() or 0
-    devices = db.query(func.count(func.distinct(Shot.Serial))).scalar() or 0
-    custom = db.query(func.count(CustomParameter.id)).scalar() or 0
-    latest_date = db.query(func.max(Shot.date)).scalar()
-    recent = db.scalars(select(Shot).order_by(Shot.id.desc()).limit(6)).all()
-    groups = db.execute(
-        select(Shot.Serial, func.count(Shot.id))
-        .group_by(Shot.Serial)
-        .order_by(func.count(Shot.id).desc(), Shot.Serial)
-        .limit(8)
-    ).all()
-    return jsonify(
-        {
-            "shots": total,
-            "serials": devices,
-            "parameters": custom,
-            "latest_date": latest_date.isoformat() if latest_date else None,
-            "recent": [serialize(shot, include_parameters=False) for shot in recent],
-            "by_serial": [{"name": serial, "count": count} for serial, count in groups],
-        }
-    )
+    from .api_features import dashboard_payload
+
+    return jsonify(dashboard_payload(request.args.get("serial", "").strip()))
 
 
 @api.get("/shots")
 def list_shots():
+    from .api_features import filters_from_args
+
     try:
         page = int(request.args.get("page", "1"))
-        size = int(request.args.get("page_size", "20"))
-    except ValueError:
-        return fail("分页参数必须是整数")
-    if page < 1 or page > 100000 or size < 1 or size > 100:
-        return fail("分页范围无效")
-    search = request.args.get("search", "").strip()
-    if len(search) > 120:
-        return fail("检索关键词过长")
-    db = session()
-    stmt = select(Shot)
-    if search:
-        term = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        stmt = stmt.where(Shot.Serial.ilike(f"%{term}%", escape="\\"))
-    total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
-    rows = db.scalars(stmt.order_by(Shot.id.desc()).offset((page - 1) * size).limit(size)).all()
-    return jsonify(
-        {
-            "items": [serialize(shot, include_parameters=False) for shot in rows],
-            "total": total,
-            "page": page,
-            "page_size": size,
-        }
-    )
+        size = int(request.args.get("page_size", "100"))
+        if page < 1 or size < 1 or size > 500:
+            raise RecordValidationError("分页范围无效")
+        stmt = filters_from_args(request.args)
+        db = session()
+        total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+        serial = request.args.get("serial", "")
+        sorting = (Shot.shot.desc(), Shot.id.desc()) if serial else (Shot.id.desc(),)
+        rows = db.scalars(stmt.order_by(*sorting).offset((page - 1) * size).limit(size)).all()
+        return jsonify(
+            {
+                "items": [serialize(row, include_parameters=True) for row in rows],
+                "total": total,
+                "page": page,
+                "page_size": size,
+            }
+        )
+    except (RecordValidationError, ValueError) as exc:
+        return fail(str(exc))
 
 
 @api.get("/shots/<int:shot_id>")
@@ -304,6 +285,8 @@ def update_shot(shot_id: int) -> Any:
         return fail("没有找到该炮次", 404)
     try:
         data = validated_form(request.get_json(silent=True))
+        if (data["Serial"], data["shot"]) != (shot.Serial, shot.shot):
+            raise RecordValidationError("已保存炮次的 Serial 和 shot 不允许修改")
         apply_payload(shot, data)
         db.commit()
         return jsonify(serialize(shot))

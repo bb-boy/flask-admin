@@ -59,6 +59,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     def health():
         return {"status": "ok"}
 
+    from . import api_features  # noqa: F401 - register additional API endpoints
     from .api import api
 
     app.register_blueprint(api)

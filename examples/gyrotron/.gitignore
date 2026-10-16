@@ -16,3 +16,5 @@ artifacts/
 frontend/node_modules/
 gyrotron/static/app/
 frontend/dist/
+
+frontend/tsconfig.tsbuildinfo
