@@ -48,11 +48,11 @@ function Shell() {
   </div>;
 }
 
-function PageTitle({ eyebrow, title, subtitle, action }: {
+function PageTitle({ action, title }: {
   eyebrow: string; title: string; subtitle: string; action?: React.ReactNode;
 }) {
   return <div className="page-heading">
-    <div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{subtitle}</p></div>
+    <div><h1>{title}</h1></div>
     {action && <div className="page-heading-action">{action}</div>}
   </div>;
 }
@@ -225,7 +225,7 @@ function ShotEditor() {
     <form onSubmit={event => void submit(event)} className="editor-layout">
       <section className="form-section">
         <div className="form-section-heading"><span className="section-icon section-blue"><Layers3 size={20} /></span>
-          <div><h2>炮次基本信息</h2><p>回旋管序列号与炮号共同标识一次实验</p></div><span className="section-step">01 / 04</span></div>
+          <div><h2>炮次基本信息</h2></div><span className="section-step">01 / 04</span></div>
         <div className="field-grid field-grid-three">
           <Field label="回旋管序列号" required><input disabled={editMode} maxLength={120} required placeholder="例如：GYRO-001" value={form.Serial} onChange={e => updateField("Serial", e.target.value)} /></Field>
           <Field label="炮号" required><input disabled={editMode} required inputMode="numeric" placeholder="请输入整数炮号" value={form.shot} onFocus={() => { shotTouched.current = true; }} onChange={e => updateField("shot", e.target.value)} /></Field>
@@ -235,7 +235,7 @@ function ShotEditor() {
 
       <section className="form-section">
         <div className="form-section-heading"><span className="section-icon section-violet"><Gauge size={20} /></span>
-          <div><h2>固定运行参数</h2><p>按实验测量值填写，未测量的字段可以留空</p></div><span className="section-step">02 / 04</span></div>
+          <div><h2>固定运行参数</h2></div><span className="section-step">02 / 04</span></div>
         {groups.map(group =>
           <div className="parameter-group" key={group}>
             <div className="parameter-group-title"><span className="group-mark" />{group}</div>
@@ -251,7 +251,7 @@ function ShotEditor() {
 
       <section className="form-section">
         <div className="form-section-heading"><span className="section-icon section-orange"><SlidersHorizontal size={20} /></span>
-          <div><h2>自定义参数</h2><p>每炮独立设置，不自动继承前一炮的参数</p></div>
+          <div><h2>自定义参数</h2></div>
           <span className="section-step">03 / 04</span></div>
         <div className="custom-params">
           {(form.custom_parameters || []).length ? form.custom_parameters!.map((parameter, index) =>
@@ -273,7 +273,7 @@ function ShotEditor() {
                       placeholder="参数值" value={parameter.value || ""} onChange={e => updateParameter(index, "value", e.target.value)} />}
                 </Field>
               </div>
-            </div>) : <div className="custom-empty"><SlidersHorizontal size={22} /><span>本炮次尚未设置自定义参数</span><small>需要记录额外测量项时，可自由添加</small></div>}
+            </div>) : <div className="custom-empty"><SlidersHorizontal size={22} /><span>本炮次尚未设置自定义参数</span></div>}
         </div>
         <datalist id="gyrotron-param-names">{suggestions.data?.map(p => <option key={p.name} value={p.name}>{p.source} · {p.description || ""}</option>)}</datalist>
         <button type="button" className="add-parameter" onClick={() => { setDirty(true); setForm(prev => ({
@@ -283,7 +283,7 @@ function ShotEditor() {
 
       <section className="form-section">
         <div className="form-section-heading"><span className="section-icon section-green"><Pencil size={19} /></span>
-          <div><h2>实验备注</h2><p>补充实验条件、观察结果和其他说明</p></div><span className="section-step">04 / 04</span></div>
+          <div><h2>实验备注</h2></div><span className="section-step">04 / 04</span></div>
         <Field label="备注内容"><textarea rows={4} className="notes-textarea" placeholder="记录本次实验的补充信息..." value={form.remark || ""} onChange={e => updateField("remark", e.target.value)} /></Field>
       </section>
       <div className="editor-actions"><span><ShieldCheck size={17} />保存后数据将存入 PostgreSQL</span>

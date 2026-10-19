@@ -43,7 +43,7 @@ export default function RecordsV11() {
     if (serial) localStorage.setItem("gyrotron-current-serial", serial);
     try { setCustomCols(JSON.parse(localStorage.getItem("gyrotron-custom-cols-" + serial) || "[]")); }
     catch { setCustomCols([]); }
-    setSelected([]); setScroll(0);
+    setActiveCell(null); setSelected([]); setScroll(0);
     if (scrollBox.current) scrollBox.current.scrollTop = 0;
   }, [serial]);
   const customConditions = useMemo((): FilterCondition[] => {
@@ -100,9 +100,11 @@ export default function RecordsV11() {
     const current = rows.findIndex(row => row.id === activeCell.id);
     if (current < 0) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c") {
-      event.preventDefault();
       const value = cellValue(rows[current], activeCell.column);
-      if (navigator.clipboard?.writeText) void navigator.clipboard.writeText(value).catch(() => {});
+      if (navigator.clipboard?.writeText) {
+        event.preventDefault();
+        void navigator.clipboard.writeText(value).catch(() => {});
+      }
       return;
     }
     if (event.key === "Enter") { event.preventDefault(); navigate("/records/" + rows[current].id + "/edit"); return; }
@@ -169,7 +171,7 @@ export default function RecordsV11() {
   }
   const busyLoading = listing.isPending || (listing.isFetching && !listing.data);
   return <div className="v11-records">
-    <div className="v11-heading"><div><h1>炮次记录</h1><p>按 Serial 管理、筛选与编辑历史炮次</p></div>
+    <div className="v11-heading"><h1>炮次记录</h1>
       <Link className="btn btn-primary" to={"/records/new?serial=" + encodeURIComponent(serial)}>+ 新增炮次</Link></div>
     <section className="v11-toolbar">
       <label>回旋管 <select aria-label="选择 Serial" value={serial} onChange={e => changeSerial(e.target.value)}>
@@ -243,9 +245,8 @@ export default function RecordsV11() {
     </section>
     {busy && <p role="status">{busy}</p>}{error && <p className="form-error" role="alert">{error}</p>}
     {listing.isError && <p className="form-error">加载失败：{String(listing.error)}</p>}
-    <div className="v11-muted">点击单元格后，可用方向键移动、Enter 进入完整编辑、Ctrl/Cmd+C 复制选中值。</div>
     <div className={"v11-table-viewport " + (compact ? "v11-compact" : "")} ref={scrollBox}
-      tabIndex={0} aria-label="可用键盘操作的炮次记录表" onKeyDown={onGridKeyDown}
+      tabIndex={0} aria-label="炮次记录表：方向键移动单元格，回车编辑，Ctrl 或 Command 加 C 复制当前值" onKeyDown={onGridKeyDown}
       onScroll={event => {
         const target = event.currentTarget;
         setScroll(target.scrollTop);
