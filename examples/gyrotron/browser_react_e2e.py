@@ -32,7 +32,7 @@ def main():
 
             # The dashboard/header must not show the create action.
             expect(page.get_by_role("link", name="新增炮次")).to_have_count(0)
-            page.get_by_role("link", name="实验记录").first.click()
+            page.get_by_role("link", name="实验记录", exact=True).click()
             page.get_by_role("link", name="+ 新增炮次").click()
             expect(page.get_by_role("heading", name="新增实验记录")).to_be_visible()
             page.get_by_placeholder("例如：GYRO-001").fill(SERIAL)
