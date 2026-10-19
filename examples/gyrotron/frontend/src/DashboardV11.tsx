@@ -166,7 +166,7 @@ export default function DashboardV11() {
             <span className="v11-bar-label">{row.name.startsWith("TEST-SYNTH-GYRO-")
               ? row.name.slice(-2) : row.name.length > 9 ? row.name.slice(0, 8) + "…" : row.name}</span>
           </button>)}
-          {!info.by_serial.length && <p>暂无炮次记录</p>}
+          {!info.by_serial.length && <p>暂无实验记录</p>}
         </div>
       </section>
       <section className="v11-panel"><div className="v11-panel-heading"><h2>实验时间趋势</h2>

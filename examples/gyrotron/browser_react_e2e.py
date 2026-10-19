@@ -32,9 +32,9 @@ def main():
 
             # The dashboard/header must not show the create action.
             expect(page.get_by_role("link", name="新增炮次")).to_have_count(0)
-            page.get_by_role("link", name="炮次记录").first.click()
+            page.get_by_role("link", name="实验记录").first.click()
             page.get_by_role("link", name="+ 新增炮次").click()
-            expect(page.get_by_role("heading", name="新增炮次记录")).to_be_visible()
+            expect(page.get_by_role("heading", name="新增实验记录")).to_be_visible()
             page.get_by_placeholder("例如：GYRO-001").fill(SERIAL)
             # The shot suggestion is async; user may choose a custom BIGINT.
             page.get_by_placeholder("请输入整数炮号").fill(SHOT)
@@ -53,14 +53,14 @@ def main():
             expect(page.get_by_placeholder("请输入测量值").first).to_have_value("")
             assert page.get_by_placeholder("例如：It").count() == 0
             page.goto(BASE + "/app/records?serial=" + SERIAL)
-            expect(page.get_by_role("heading", name="炮次记录", exact=True)).to_be_visible()
+            expect(page.get_by_role("heading", name="实验记录", exact=True)).to_be_visible()
             expect(page.get_by_text(SHOT, exact=True)).to_be_visible()
             page.screenshot(path=str(out / "v11-records.png"), full_page=True)
 
             # Helper copy is removed, but the shortcuts remain usable.
             assert page.get_by_text("按 Serial 管理、筛选与编辑历史炮次").count() == 0
             assert page.get_by_text("点击单元格后，可用方向键移动").count() == 0
-            heading_weight = page.get_by_role("heading", name="炮次记录", exact=True).evaluate(
+            heading_weight = page.get_by_role("heading", name="实验记录", exact=True).evaluate(
                 "(node) => Number.parseInt(getComputedStyle(node).fontWeight, 10)"
             )
             assert heading_weight >= 700
@@ -98,18 +98,18 @@ def main():
             page.locator(".v11-table-viewport").press("ArrowRight")
             expect(row.locator("td").nth(3)).to_have_class("v11-active-cell")
             page.locator(".v11-table-viewport").press("Enter")
-            expect(page.get_by_role("heading", name="编辑炮次记录")).to_be_visible()
+            expect(page.get_by_role("heading", name="编辑实验记录")).to_be_visible()
             expect(page.get_by_placeholder("参数值")).to_have_value("3.25")
             page.get_by_placeholder("参数值").fill("4.5")
             assert page.get_by_placeholder("例如：GYRO-001").is_disabled()
             assert page.get_by_placeholder("请输入整数炮号").is_disabled()
             page.get_by_role("button", name="保存并返回列表").click()
-            expect(page.get_by_role("heading", name="炮次记录", exact=True)).to_be_visible()
+            expect(page.get_by_role("heading", name="实验记录", exact=True)).to_be_visible()
             expect(page.get_by_role("button", name="编辑本行")).to_have_count(0)
             page.get_by_role("link", name="完整编辑").first.click()
             expect(page.get_by_placeholder("参数值")).to_have_value("4.5")
             page.get_by_role("button", name="保存并返回列表").click()
-            expect(page.get_by_role("heading", name="炮次记录", exact=True)).to_be_visible()
+            expect(page.get_by_role("heading", name="实验记录", exact=True)).to_be_visible()
 
             with page.expect_download() as download_info:
                 page.get_by_role("link", name="导出 Excel").click()

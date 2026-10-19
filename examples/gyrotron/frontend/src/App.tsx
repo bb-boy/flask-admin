@@ -33,7 +33,7 @@ function Shell() {
     <div className="main-frame">
       <header className="v11-topbar">
         <Link to="/" className="v11-brand"><Activity size={22} /><strong>回旋管实验记录</strong></Link>
-        <nav aria-label="主导航"><NavLink to="/" end>工作台</NavLink><NavLink to="/records">炮次记录</NavLink></nav>
+        <nav aria-label="主导航"><NavLink to="/" end>工作台</NavLink><NavLink to="/records">实验记录</NavLink></nav>
       </header>
       <main className="content">
         <Routes>
@@ -217,7 +217,7 @@ function ShotEditor() {
 
   return <>
     <PageTitle eyebrow={editMode ? "记录管理 / 编辑历史炮次" : "记录管理 / 新建炮次"}
-      title={editMode ? "编辑炮次记录" : "新增炮次记录"} subtitle={editMode
+      title={editMode ? "编辑实验记录" : "新增实验记录"} subtitle={editMode
         ? "修改当前炮次的运行信息和独立自定义参数"
         : "填写本次实验数据，保存后即可检索和编辑"}
       action={<Link className="btn btn-secondary" to="/records"><ArrowLeft size={16} />返回列表</Link>} />

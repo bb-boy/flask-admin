@@ -171,7 +171,7 @@ export default function RecordsV11() {
   }
   const busyLoading = listing.isPending || (listing.isFetching && !listing.data);
   return <div className="v11-records">
-    <div className="v11-heading"><h1>炮次记录</h1>
+    <div className="v11-heading"><h1>实验记录</h1>
       <Link className="btn btn-primary" to={"/records/new?serial=" + encodeURIComponent(serial)}>+ 新增炮次</Link></div>
     <section className="v11-toolbar">
       <label>回旋管 <select aria-label="选择 Serial" value={serial} onChange={e => changeSerial(e.target.value)}>
@@ -246,7 +246,7 @@ export default function RecordsV11() {
     {busy && <p role="status">{busy}</p>}{error && <p className="form-error" role="alert">{error}</p>}
     {listing.isError && <p className="form-error">加载失败：{String(listing.error)}</p>}
     <div className={"v11-table-viewport " + (compact ? "v11-compact" : "")} ref={scrollBox}
-      tabIndex={0} aria-label="炮次记录表：方向键移动单元格，回车编辑，Ctrl 或 Command 加 C 复制当前值" onKeyDown={onGridKeyDown}
+      tabIndex={0} aria-label="实验记录表：方向键移动单元格，回车编辑，Ctrl 或 Command 加 C 复制当前值" onKeyDown={onGridKeyDown}
       onScroll={event => {
         const target = event.currentTarget;
         setScroll(target.scrollTop);
