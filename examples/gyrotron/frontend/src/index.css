@@ -239,6 +239,8 @@ a { text-decoration: none; }
 .v11-topbar nav a.active { border-color:#5d80c7; color:#245aa3; font-weight:700; }
 .v11-heading { display:flex; justify-content:space-between; align-items:center; gap:15px; margin:0 0 23px; }
 .v11-heading h1 { font-size:27px; color:#24364a; margin:0 0 6px; }
+/* Dashboard title: prominent black heavyweight text. */
+.v11-dashboard .v11-heading h1 { color:#111111; font-weight:900; }
 .v11-heading p { color:#8290a1; margin:0; font-size:12px; }
 .v11-filters, .v11-toolbar, .v11-actions>div { display:flex; align-items:center; flex-wrap:wrap; gap:11px; }
 .v11-filters select,.v11-toolbar select,.v11-toolbar input,.v11-inline input { border:1px solid #dce4ec; border-radius:7px; background:white; color:#29425e; padding:9px 11px; min-width:0; }

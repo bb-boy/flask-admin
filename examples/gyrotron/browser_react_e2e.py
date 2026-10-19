@@ -24,6 +24,11 @@ def main():
         try:
             page.goto(BASE + "/app/")
             expect(page.get_by_role("heading", name="实验工作台")).to_be_visible()
+            title_style = page.get_by_role("heading", name="实验工作台").evaluate(
+                "(node) => ({ weight: Number.parseInt(getComputedStyle(node).fontWeight, 10), color: getComputedStyle(node).color })"
+            )
+            assert title_style["weight"] >= 900
+            assert title_style["color"] == "rgb(17, 17, 17)"
             expect(page.get_by_role("heading", name="脉宽分布")).to_be_visible()
             expect(page.get_by_role("heading", name="回旋管炮次数量分布")).to_be_visible()
             expect(page.get_by_role("heading", name="实验时间趋势")).to_be_visible()
