@@ -294,6 +294,6 @@ function FragmentRow({ row, cols, customCols, selected, toggle, activeCol, selec
         return <td key={name} className={activeCol === index + cols.length + 3 ? "v11-active-cell" : ""}
           onClick={() => selectCell(index + cols.length + 3)}>{!p ? "未添加" : p.value === null || p.value === "" ? "未填写" : p.value}</td>;
       })}
-      <td><Link className="v11-cell-action" to={"/records/" + row.id + "/edit"}>完整编辑</Link></td>
+      <td><Link className="v11-cell-action" to={"/records/" + row.id + "/edit"}>编辑</Link></td>
   </tr>;
 }

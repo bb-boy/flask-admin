@@ -92,7 +92,7 @@ def main():
             page.get_by_role("button", name="清空筛选").click()
             # Inline editing was removed; Enter on a selected cell opens full edit.
             expect(page.get_by_role("button", name="编辑本行")).to_have_count(0)
-            expect(page.get_by_role("link", name="完整编辑").first).to_be_visible()
+            expect(page.get_by_role("link", name="编辑").first).to_be_visible()
             row = page.locator("tr[data-shot-id]").first
             row.locator("td").nth(2).click()
             page.locator(".v11-table-viewport").press("ArrowRight")
@@ -106,7 +106,7 @@ def main():
             page.get_by_role("button", name="保存并返回列表").click()
             expect(page.get_by_role("heading", name="实验记录", exact=True)).to_be_visible()
             expect(page.get_by_role("button", name="编辑本行")).to_have_count(0)
-            page.get_by_role("link", name="完整编辑").first.click()
+            page.get_by_role("link", name="编辑").first.click()
             expect(page.get_by_placeholder("参数值")).to_have_value("4.5")
             page.get_by_role("button", name="保存并返回列表").click()
             expect(page.get_by_role("heading", name="实验记录", exact=True)).to_be_visible()
