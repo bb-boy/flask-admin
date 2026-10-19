@@ -57,6 +57,25 @@ def main():
             expect(page.get_by_text(SHOT, exact=True)).to_be_visible()
             page.screenshot(path=str(out / "v11-records.png"), full_page=True)
 
+            # Helper copy is removed, but the shortcuts remain usable.
+            assert page.get_by_text("按 Serial 管理、筛选与编辑历史炮次").count() == 0
+            assert page.get_by_text("点击单元格后，可用方向键移动").count() == 0
+            heading_weight = page.get_by_role("heading", name="炮次记录", exact=True).evaluate(
+                "(node) => Number.parseInt(getComputedStyle(node).fontWeight, 10)"
+            )
+            assert heading_weight >= 700
+            # The browser clipboard must receive the exact selected shot value.
+            context.grant_permissions(["clipboard-read", "clipboard-write"], origin=BASE)
+            shot_cell = page.locator("tr[data-shot-id]").first.locator("td").nth(2)
+            shot_cell.click()
+            page.locator(".v11-table-viewport").press("ControlOrMeta+c")
+            assert page.evaluate("navigator.clipboard.readText()") == SHOT
+            page.locator(".v11-table-viewport").press("ArrowLeft")
+            expect(page.locator("tr[data-shot-id]").first.locator("td").nth(1)).to_have_class(
+                "v11-pin v11-active-cell"
+            )
+            page.locator(".v11-table-viewport").press("ArrowRight")
+
             # Filter custom values with multiple AND conditions across the full result.
             page.get_by_role("button", name="高级筛选").click()
             page.get_by_role("button", name="+ 添加条件").click()
